@@ -1,0 +1,193 @@
+<?php
+// test_sms.php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo "<h2>📱 SMS System Test - Fabrico Laundry</h2>";
+
+// Fast2SMS function directly copy
+function testSendSMS($mobile, $message) {
+    $api_key = 'oaCurOd1Ki0SAIHtPwx5gs9fycFXZQ6JpLB8Yz2W7D3vqebElMhcFHNM89nPRTIDo3fjQJig6Y5skdmr';
+    
+    // Clean mobile number
+    $mobile = preg_replace('/\D/', '', $mobile);
+    
+    // Validate
+    if (strlen($mobile) != 10) {
+        return ['error' => 'Invalid mobile number (must be 10 digits)'];
+    }
+    
+    $url = "https://www.fast2sms.com/dev/bulkV2";
+    
+    // Test different settings
+    $test_configs = [
+        ['route' => 'p', 'sender' => 'FSTSMS', 'name' => 'Promotional (p) with FSTSMS'],
+        ['route' => 'p', 'sender' => 'TXTIND', 'name' => 'Promotional (p) with TXTIND'],
+        ['route' => 'v3', 'sender' => 'FSTSMS', 'name' => 'Route v3 with FSTSMS'],
+        ['route' => 'dlt', 'sender' => 'FSTSMS', 'name' => 'DLT Route'],
+    ];
+    
+    $all_results = [];
+    
+    foreach ($test_configs as $config) {
+        echo "<div style='border:1px solid #ccc; padding:15px; margin:10px 0; border-radius:8px;'>";
+        echo "<h3 style='color:#1976d2;'>Testing: {$config['name']}</h3>";
+        
+        $fields = [
+            "sender_id" => $config['sender'],
+            "message" => $message,
+            "language" => "english",
+            "route" => $config['route'],
+            "numbers" => $mobile,
+            "flash" => 0
+        ];
+        
+        echo "<p><strong>Settings:</strong> Sender: {$config['sender']}, Route: {$config['route']}</p>";
+        
+        $headers = [
+            'authorization: ' . $api_key,
+            'Content-Type: application/json',
+            'cache-control: no-cache'
+        ];
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        
+        $result = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        echo "<p><strong>HTTP Status:</strong> $http_code</p>";
+        
+        if ($curl_error) {
+            echo "<p style='color:red;'><strong>cURL Error:</strong> $curl_error</p>";
+        }
+        
+        $response = json_decode($result, true);
+        
+        echo "<p><strong>API Response:</strong></p>";
+        echo "<pre style='background:#f5f5f5; padding:10px; border-radius:5px;'>";
+        print_r($response);
+        echo "</pre>";
+        
+        if (isset($response['return']) && $response['return'] == true) {
+            echo "<p style='color:green; font-weight:bold;'>✅ SMS SENT SUCCESSFULLY!</p>";
+        } else {
+            echo "<p style='color:red; font-weight:bold;'>❌ SMS FAILED</p>";
+            if (isset($response['message'])) {
+                echo "<p><strong>Error:</strong> " . $response['message'] . "</p>";
+            }
+        }
+        
+        echo "</div><hr>";
+        
+        $all_results[] = [
+            'config' => $config['name'],
+            'success' => isset($response['return']) && $response['return'] == true,
+            'response' => $response
+        ];
+    }
+    
+    return $all_results;
+}
+
+// Check if form submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $mobile = $_POST['mobile'] ?? '';
+    $message = $_POST['message'] ?? 'Test SMS from Fabrico Laundry System';
+    
+    if (empty($mobile)) {
+        echo "<p style='color:red;'>Please enter mobile number</p>";
+    } else {
+        echo "<h3>📤 Sending Test SMS to: $mobile</h3>";
+        $results = testSendSMS($mobile, $message);
+        
+        // Summary
+        echo "<h3>📊 Test Summary</h3>";
+        $success_count = 0;
+        foreach ($results as $result) {
+            if ($result['success']) {
+                $success_count++;
+                echo "<p style='color:green;'>✅ {$result['config']}: SUCCESS</p>";
+            } else {
+                echo "<p style='color:red;'>❌ {$result['config']}: FAILED</p>";
+            }
+        }
+        
+        if ($success_count > 0) {
+            echo "<p style='color:green; font-size:18px;'>🎉 $success_count out of 4 configurations worked!</p>";
+        } else {
+            echo "<p style='color:red; font-size:18px;'>😞 No configuration worked. Check API key or try different message.</p>";
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMS Test - Fabrico Laundry</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #1976d2; color: white; border: none; padding: 12px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #1565c0; }
+        .note { background: #fff9e6; padding: 10px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SMS Configuration Test</h1>
+        
+        <div class="note">
+            <strong>Note:</strong> This will test 4 different SMS configurations to find which one works with your Fast2SMS trial account.
+        </div>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="mobile">📱 Mobile Number (10 digits):</label>
+                <input type="text" id="mobile" name="mobile" placeholder="9876543210" required pattern="[0-9]{10}" maxlength="10">
+            </div>
+            
+            <div class="form-group">
+                <label for="message">💬 Test Message:</label>
+                <textarea id="message" name="message" rows="3">Fabrico Laundry: Test SMS from your system. If received, SMS is working fine. Thank you!</textarea>
+            </div>
+            
+            <button type="submit">🚀 Send Test SMS</button>
+        </form>
+        
+        <div class="note" style="margin-top: 20px;">
+            <h3>📋 What will be tested:</h3>
+            <ol>
+                <li>Promotional route (p) with FSTSMS sender</li>
+                <li>Promotional route (p) with TXTIND sender</li>
+                <li>Route v3 with FSTSMS sender</li>
+                <li>DLT route with FSTSMS sender</li>
+            </ol>
+            <p><strong>Expected:</strong> At least 1-2 should work in trial account.</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <h3>🔍 Check Logs:</h3>
+            <p>After testing, check these log files:</p>
+            <ul>
+                <li><a href="sms_api_log.txt" target="_blank">sms_api_log.txt</a> - API responses</li>
+                <li><a href="sms_delivery_log.txt" target="_blank">sms_delivery_log.txt</a> - SMS delivery status</li>
+            </ul>
+            <p>If files don't exist, create them manually with permissions 666.</p>
+        </div>
+    </div>
+</body>
+</html>

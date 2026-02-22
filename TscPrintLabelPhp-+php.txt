@@ -1,0 +1,78 @@
+<?php
+// file: print_label.php
+
+// Sample dynamic values (replace with your database values)
+$customer = "Rahul Sharma";
+$order_no = "ORD12345";
+$date = date("d-m-Y");
+$product = "Maxx Spray";
+$service = "5 Litres";
+$qty = 3;
+
+// TSPL Label Format
+tspl = "
+SIZE 60 mm,40 mm
+GAP 3 mm,0
+DIRECTION 1
+CLS
+
+TEXT 20,20,\"3\",0,1,1,\"Customer: $customer\"
+TEXT 20,60,\"3\",0,1,1,\"Order No: $order_no\"
+TEXT 20,100,\"3\",0,1,1,\"Date: $date\"
+
+TEXT 20,150,\"3\",0,1,1,\"Product: $product\"
+TEXT 20,190,\"3\",0,1,1,\"Service: $service\"
+TEXT 20,230,\"3\",0,1,1,\"Total Qty: $qty\"
+
+PRINT 1
+";
+
+// Send TSPL to NodeJS Print Server
+$ch = curl_init("http://localhost:3000/print");
+curl_setopt($ch, CURLOPT_POST, 1);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $tspl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+?>
+
+<!-- HTML Form to input label values -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TSC Label Form</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        label { font-weight: bold; }
+        input { padding: 8px; width: 300px; margin-bottom: 10px; }
+        button { padding: 10px 20px; font-size: 16px; }
+    </style>
+</head>
+<body>
+<h2>Enter Label Details</h2>
+<form method="POST">
+    <label>Customer Name:</label><br>
+    <input type="text" name="customer" required><br>
+
+    <label>Order Number:</label><br>
+    <input type="text" name="order_no" required><br>
+
+    <label>Date:</label><br>
+    <input type="date" name="date" required><br>
+
+    <label>Product Name:</label><br>
+    <input type="text" name="product" required><br>
+
+    <label>Service Type:</label><br>
+    <input type="text" name="service" required><br>
+
+    <label>Total Qty:</label><br>
+    <input type="number" name="qty" required><br>
+
+    <button type="submit">Print Label</button>
+</form>
+</body>
+</html>

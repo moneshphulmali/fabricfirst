@@ -1,0 +1,25 @@
+SIZE 60 mm,40 mm
+GAP 2 mm,0 mm
+DIRECTION 1
+CLS
+TEXT 10,10,"0",0,1,1,"Sameer"
+TEXT 10,20,"0",0,1,1,"Order: 59"
+TEXT 10,30,"0",0,1,1,"Delivery: 2025-11-23"
+TEXT 10,40,"0",0,1,1,"Quilt Cover"
+TEXT 10,50,"0",0,1,1,"(Steam Press)"
+TEXT 10,60,"0",0,1,1,"--------✂-----------"
+PRINT 1
+TEXT 10,10,"0",0,1,1,"Sameer"
+TEXT 10,20,"0",0,1,1,"Order: 59"
+TEXT 10,30,"0",0,1,1,"Delivery: 2025-11-23"
+TEXT 10,40,"0",0,1,1,"Quilt/Comforter"
+TEXT 10,50,"0",0,1,1,"(Dry Clean)"
+TEXT 10,60,"0",0,1,1,"--------✂-----------"
+PRINT 1
+TEXT 10,10,"0",0,1,1,"Sameer"
+TEXT 10,20,"0",0,1,1,"Order: 59"
+TEXT 10,30,"0",0,1,1,"Delivery: 2025-11-23"
+TEXT 10,40,"0",0,1,1,"Seat Cover/per seat"
+TEXT 10,50,"0",0,1,1,"(Dry Clean)"
+TEXT 10,60,"0",0,1,1,"--------✂-----------"
+PRINT 1
