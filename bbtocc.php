@@ -821,7 +821,7 @@ td:nth-child(3) {  /* Store name कॉलम (तीसरा कॉलम) */
 <?php include 'menu.php'; ?>  
 
 <center>
-  <h2>🧾 Ordersre Monesh</h2>
+  <h2>🧾 Orders</h2>
   <input type="text" id="searchBox" placeholder="🔍 Search by Order ID, Name or Phone">
   <button id="searchBtn">Search</button>
 </center>
