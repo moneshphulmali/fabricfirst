@@ -821,7 +821,7 @@ td:nth-child(3) {  /* Store name कॉलम (तीसरा कॉलम) */
 <?php include 'menu.php'; ?>  
 
 <center>
-  <h2>🧾 Orders</h2>
+  <h2>🧾 Orders </h2>
   <input type="text" id="searchBox" placeholder="🔍 Search by Order ID, Name or Phone">
   <button id="searchBtn">Search</button>
 </center>
@@ -1087,7 +1087,6 @@ function showTagInfo(order_id) {
         });
 
         data.items.forEach(item => {
-            let qty = Number(item.qty) || 1;
             let qty = Math.ceil(Number(item.qty) || 1); // Tag ke liye round up karein (1.5kg = 2 tags or 1 tag logic)
             let itemComments = item.comments || [];
             
