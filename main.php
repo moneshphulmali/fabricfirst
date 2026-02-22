@@ -270,6 +270,26 @@ if (isset($_GET['action'])) {
         exit;
     }
 
+    // GET COUPONS (OFFERS) FROM DB
+    if ($action == 'get_coupons') {
+        $sql = "SELECT code, discount_percent FROM coupons WHERE storeid = ? AND status = 'active' ORDER BY discount_percent ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $storeid);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $coupons = [];
+        while ($row = $result->fetch_assoc()) {
+            $coupons[] = [
+                'name' => $row['code'],
+                'percent' => floatval($row['discount_percent'])
+            ];
+        }
+        
+        echo json_encode(["status" => "success", "data" => $coupons]);
+        exit;
+    }
+
     // SAVE ORDER
     if ($action == 'save_order') {
         // Get raw input
@@ -1405,16 +1425,15 @@ const isEditMode = urlParams.has('order_id');
 const orderId = urlParams.get('order_id');
 
 // Coupon offers
-const offers = [
-    { name: "OFF5", percent: 5 },
-    { name: "OFF10", percent: 10 },
-    { name: "OFF15", percent: 15 },
-    { name: "OFF20", percent: 20 },
-    { name: "OFF25", percent: 25 },
-    { name: "OFF30", percent: 30 },
-    { name: "OFF50", percent: 50 },
-    { name: "OFF100", percent: 100 }
-];
+let offers = [];
+
+// Load coupons from DB
+fetch("?action=get_coupons")
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === "success") offers = data.data;
+  });
+
 let appliedCoupon = null;
 
 // Comments
