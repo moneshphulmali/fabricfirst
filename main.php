@@ -1175,7 +1175,7 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
 <?php include 'menu.php'; ?> 
 
 <h2 style="text-align:center; color: black">
-    <?php echo $is_edit_mode ? "✏️ Edit Order #$current_order_id" : "🧺 Walk In in"; ?>
+    <?php echo $is_edit_mode ? "✏️ Edit Order #$current_order_id" : "🧺 Walk In"; ?>
 </h2>
 <div class="container">
 
