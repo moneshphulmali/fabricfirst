@@ -163,14 +163,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && !isset
                     
                     $role_stmt->close();
                 } else {
-                    $login_error = "❌ गलत पासवर्ड।";
+                    $login_error = "❌ Incorrect password";
                 }
             } else {
-                $login_error = "❌ यूजर नहीं मिला। कृपया सही login ID या phone number दर्ज करें।";
+                $login_error = "❌ User not found. Please enter the correct login ID or phone number.";
             }
             $stmt->close();
         } else {
-            $login_error = "❌ Database error. कृपया बाद में कोशिश करें।";
+            $login_error = "❌ Database error. Please try again later.";
         }
     }
 }
