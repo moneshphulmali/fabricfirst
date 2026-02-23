@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && !isset
 
     // Basic validation
     if ($username === '' || $password === '' || $selected_role === '') {
-        $login_error = "कृपया username, password और role तीनों भरें।";
+        $login_error = "Please enter username, password, and role.";
     } else {
         // 1. PEHLE users TABLE SE USER CHECK KARO
         $stmt = $conn->prepare("
@@ -152,10 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && !isset
                         }
                         
                         if (empty($available_roles)) {
-                            $login_error = "❌ आपको किसी भी store में role assign नहीं है।";
+                            $login_error = "❌ You are not assigned a role in any store.";
                         } else {
-                            $login_error = "❌ आपकी यह role किसी store में नहीं है। आपके पास यह roles हैं: " . 
-                                          implode(', ', $available_roles);
+                            $login_error = "❌ You do not have this role in any store. Your available roles are: " .
+                                           implode(', ', $available_roles);
                         }
                         
                         $available_roles_stmt->close();
