@@ -67,6 +67,52 @@ $_SESSION['user']['roles'] = [
 $storeid = $current_store_id;  // ✅ Line 15 ki jagah yeh line
 
 
+// Handle AJAX request for Store Comparison (Admin Only)
+if (isset($_GET['action']) && $_GET['action'] == 'get_store_comparison_data') {
+    header('Content-Type: application/json');
+    
+    if (!$is_admin && !$is_manager) {
+        echo json_encode(["status"=>"error", "message"=>"Access denied"]);
+        exit;
+    }
+
+    $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+    $end_date = $_GET['end_date'] ?? date('Y-m-d');
+
+    // Fetch data for all stores managed by this user
+    $query = "
+        SELECT 
+            s.store_name,
+            COUNT(o.id) as total_orders,
+            COALESCE(SUM(o.total_amount), 0) as total_sales
+        FROM orders o
+        JOIN stores s ON o.storeid = s.storeid
+        JOIN store_user_roles sur ON o.storeid = sur.storeid
+        WHERE sur.user_id = ? 
+        AND sur.role_id IN (1, 2) -- Admin or Manager
+        AND DATE(o.order_date) BETWEEN ? AND ?
+        GROUP BY s.storeid, s.store_name
+        ORDER BY total_sales DESC
+    ";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("iss", $user_id, $start_date, $end_date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $data = ['stores' => [], 'orders' => [], 'sales' => []];
+
+    while ($row = $result->fetch_assoc()) {
+        $data['stores'][] = $row['store_name'];
+        $data['orders'][] = (int)$row['total_orders'];
+        $data['sales'][] = (float)$row['total_sales'];
+    }
+
+    echo json_encode(["status"=>"success", "data"=>$data]);
+    $stmt->close();
+    exit;
+}
+
 // Handle AJAX request for chart data
 if (isset($_GET['action']) && $_GET['action'] == 'get_analytics_data') {
     header('Content-Type: application/json');
@@ -470,6 +516,16 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_analytics_data') {
                 </div>
             </div>
 
+            <!-- Store Comparison Chart (Admin Only) -->
+            <?php if ($is_admin): ?>
+            <div class="chart-card">
+                <div class="chart-title">STORE PERFORMANCE COMPARISON (ALL STORES)</div>
+                <div class="chart-container">
+                    <canvas id="storeComparisonChart"></canvas>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Order Status Analysis Chart -->
             <div class="chart-card">
                 <div class="chart-title">ORDER STATUS ANALYSIS</div>
@@ -518,7 +574,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_analytics_data') {
     </div>
 
     <script>
-        let orderStatusChart, salesTrendChart, revenueChart;
+        let orderStatusChart, salesTrendChart, revenueChart, storeComparisonChart;
         let currentPeriod = 'daily';
         let currentRevenuePeriod = 'daily';
         let currentSalesTrendPeriod = 'daily';
@@ -706,6 +762,44 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_analytics_data') {
                     }
                 }
             });
+
+            // Store Comparison Chart (Only if element exists)
+            const storeCompCanvas = document.getElementById('storeComparisonChart');
+            if (storeCompCanvas) {
+                const storeCompCtx = storeCompCanvas.getContext('2d');
+                storeComparisonChart = new Chart(storeCompCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Total Sales (₹)',
+                                data: [],
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Total Orders',
+                                data: [],
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Sales Amount (₹)' } },
+                            y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Order Count' }, grid: { drawOnChartArea: false } }
+                        }
+                    }
+                });
+            }
         }
 
         // Fetch data function
@@ -728,6 +822,27 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_analytics_data') {
                 document.getElementById('chartLoading').style.display = 'none';
                 console.error('Data fetch error:', error);
                 alert('Network error: Data fetch nahi ho paya');
+            }
+
+            // Fetch Store Comparison Data if Admin
+            if (document.getElementById('storeComparisonChart')) {
+                fetchStoreComparisonData(startDate, endDate);
+            }
+        }
+
+        async function fetchStoreComparisonData(startDate, endDate) {
+            try {
+                const response = await fetch(`?action=get_store_comparison_data&start_date=${startDate}&end_date=${endDate}`);
+                const result = await response.json();
+                
+                if (result.status === "success" && storeComparisonChart) {
+                    storeComparisonChart.data.labels = result.data.stores;
+                    storeComparisonChart.data.datasets[0].data = result.data.sales;
+                    storeComparisonChart.data.datasets[1].data = result.data.orders;
+                    storeComparisonChart.update();
+                }
+            } catch (error) {
+                console.error('Store comparison fetch error:', error);
             }
         }
 

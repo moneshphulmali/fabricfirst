@@ -2324,3 +2324,14 @@ Array
 )
 
 ---
+Array
+(
+    [time] => 2026-02-23 09:05:01
+    [mobile] => 8324592634
+    [message] => Hello Rubi, Your order #22 has been created. Amount: Rs.199. Delivery: 22/02/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---

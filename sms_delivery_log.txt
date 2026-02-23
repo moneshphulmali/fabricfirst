@@ -1998,3 +1998,12 @@ Message: Hello Nitesh A, Your order #21 has been created. Amount: Rs.283.1. Deli
 API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
 ========================================
 
+========================================
+Time: 2026-02-23 09:05:01
+Order ID: 22
+Customer: Rubi
+Mobile: 8324592634
+Message: Hello Rubi, Your order #22 has been created. Amount: Rs.199. Delivery: 22/02/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
