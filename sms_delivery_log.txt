@@ -1989,3 +1989,12 @@ Message: Hello ragu, Your order #20 has been created. Amount: Rs.94.05. Delivery
 API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
 ========================================
 
+========================================
+Time: 2026-02-23 07:52:53
+Order ID: 21
+Customer: Nitesh A
+Mobile: 9617377813
+Message: Hello Nitesh A, Your order #21 has been created. Amount: Rs.283.1. Delivery: 25/02/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+

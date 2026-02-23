@@ -8,16 +8,56 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['current_store'])) {
     exit;
 }
 
-$storeid = $_SESSION['user']['current_store']['storeid'];
+// ✅ Get User's Admin Stores
+$user_stores = $_SESSION['user']['stores'] ?? [];
+$admin_stores = [];
+
+// Filter stores where user is admin
+foreach ($user_stores as $s) {
+    if (isset($s['role_name']) && strtolower($s['role_name']) === 'admin') {
+        $admin_stores[$s['storeid']] = $s;
+    }
+}
+
+// Fallback: If session stores empty but user is marked as admin in current session
+if (empty($admin_stores) && isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin']) {
+    $admin_stores[$_SESSION['user']['current_store']['storeid']] = $_SESSION['user']['current_store'];
+}
+
+// Determine which store to show
+$current_session_store_id = $_SESSION['user']['current_store']['storeid'];
+$selected_store_id = isset($_GET['store_id']) ? intval($_GET['store_id']) : $current_session_store_id;
+
+// Security check: Is the selected store in the user's admin list?
+if (!empty($admin_stores)) {
+    if (!array_key_exists($selected_store_id, $admin_stores)) {
+        // If selected store is not allowed, default to current store if allowed, else first allowed
+        if (array_key_exists($current_session_store_id, $admin_stores)) {
+            $selected_store_id = $current_session_store_id;
+        } else {
+            $selected_store_id = array_key_first($admin_stores);
+        }
+    }
+} else {
+    $selected_store_id = $current_session_store_id;
+}
+
+$storeid = $selected_store_id;
 
 // ✅ Handle Price Update (AJAX Request)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_price') {
     $id = intval($_POST['id']);
-    $new_price = intval($_POST['price']);
+    $new_price = floatval($_POST['price']);
+    $post_store_id = isset($_POST['store_id']) ? intval($_POST['store_id']) : $storeid;
     
-    // Security check: Ensure the price belongs to the current store
+    // Security check: Ensure the price belongs to the target store and user has access
+    if (!empty($admin_stores) && !array_key_exists($post_store_id, $admin_stores)) {
+        echo "error: unauthorized";
+        exit;
+    }
+    
     $stmt = $conn->prepare("UPDATE price SET price = ? WHERE id = ? AND storeid = ?");
-    $stmt->bind_param("dii", $new_price, $id, $storeid);
+    $stmt->bind_param("dii", $new_price, $id, $post_store_id);
     
     if ($stmt->execute()) {
         echo "success";
@@ -130,6 +170,24 @@ while ($row = $result->fetch_assoc()) {
     <div class="container">
         <h2>💰 Manage Store Prices</h2>
         
+        <!-- Store Selector for Admins -->
+        <?php if (count($admin_stores) > 1): ?>
+        <div style="margin-bottom: 20px; text-align: center;">
+            <label for="storeSelector" style="font-weight: bold; margin-right: 10px;">Select Store:</label>
+            <select id="storeSelector" onchange="window.location.href='?store_id='+this.value" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <?php foreach ($admin_stores as $s_id => $s_data): ?>
+                    <option value="<?= $s_id ?>" <?= $s_id == $storeid ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($s_data['store_name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php elseif (!empty($admin_stores)): ?>
+            <div style="text-align:center; margin-bottom:15px; color:#666;">
+                Store: <strong><?= htmlspecialchars($admin_stores[$storeid]['store_name'] ?? '') ?></strong>
+            </div>
+        <?php endif; ?>
+        
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search for product, type or service..." onkeyup="applyFilters()">
         
         <div id="alphabetFilter" class="alphabet-filter"></div>
@@ -190,6 +248,7 @@ function updatePrice(id) {
     formData.append('action', 'update_price');
     formData.append('id', id);
     formData.append('price', newPrice);
+    formData.append('store_id', '<?= $storeid ?>');
     
     fetch('my_store.php', {
         method: 'POST',
