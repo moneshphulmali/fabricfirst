@@ -1724,6 +1724,11 @@ function showServices(name, type) {
   const services = allProducts[name] && allProducts[name][type] ? allProducts[name][type] : [];
   
   services.forEach(s => {
+    let addGarmentsBtn = "";
+    if (name.toLowerCase().includes('laundry by weight')) {
+        addGarmentsBtn = `<button class="add-btn" style="background:#ff9800; margin-left:5px;" onclick="openGarmentModal('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add Garments</button>`;
+    }
+
     const serviceDiv = document.createElement("div");
     serviceDiv.className = "service-item";
     
@@ -1739,6 +1744,7 @@ function showServices(name, type) {
       </div>
       <div>
         <button class="add-btn" onclick="addItem('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add</button>
+        ${addGarmentsBtn}
       </div>
     `;
     
@@ -1883,25 +1889,44 @@ function addItem(name, type, service, price, qty = 1, item_comments = [], unit =
   
   const row = document.createElement("tr");
   row.dataset.itemId = itemId;
-  row.innerHTML = `
-    <td>${name} (${type})</td>
-    <td>${service}</td>
-    <td>${qtyInputHTML} ${unit}</td>
-    <td class='price-cell'>₹${(price * qty).toFixed(2)}</td>
-    <td class='comments-cell' onclick="editComments(this)">
+
+  // ✅ Build the first cell
+  let nameCellHTML = '<td>';
+  if (isKg) {
+      nameCellHTML += getKgItemCellHTML(name, type, item_comments, itemId);
+  } else {
+      nameCellHTML += `${name} (${type})`;
+  }
+  nameCellHTML += `</td>`;
+
+  // For piece-based items, the comments cell is clickable. For weight-based, it's not.
+  const commentsCellHTML = isKg 
+    ? `<td class='comments-cell'>-</td>` 
+    : `<td class='comments-cell' onclick="editComments(this)">
         <div id="comments-${itemId}" class="item-comments-display">
            ${item_comments.length > 0 
                ? item_comments.map(comment => `<span class="comment-badge" title="${comment}">💬</span>`).join('') + `(${item_comments.length})`
                : '<span class="empty-comments">Click to add comments</span>'
            }
         </div>
-    </td>
-    <td><button onclick="removeItem(this)">❌</button></td>
+    </td>`;
+
+    // The action cell with remove button ONLY
+    const actionCellHTML = `<td><button onclick="removeItem(this)">❌</button></td>`;
+
+  row.innerHTML = `
+    ${nameCellHTML}
+    <td>${service}</td>
+    <td>${qtyInputHTML} ${unit}</td>
+    <td class='price-cell'>₹${(price * qty).toFixed(2)}</td>
+    ${commentsCellHTML}
+    ${actionCellHTML}
   `;
   
   row.dataset.price = price;
   row.dataset.qty = qty;
   row.dataset.itemName = name;
+  row.dataset.itemType = type;
   row.dataset.serviceName = service;
   row.dataset.unit = unit; // Store unit
   row.dataset.comments = JSON.stringify(item_comments);
@@ -2410,6 +2435,383 @@ document.addEventListener("DOMContentLoaded", () => {
         loadExistingOrderItems();
     }
 });
+
+// ✅ GARMENT SELECTION MODAL LOGIC
+let currentWeightService = null;
+
+function openGarmentModal(name, type, service, price) {
+    name = unescape(name);
+    type = unescape(type);
+    service = unescape(service);
+    
+    currentWeightService = { name, type, service, price };
+
+    // Reset weight input to default
+    document.getElementById('garmentWeight').value = '1.0';
+    
+    document.getElementById('garmentModal').style.display = 'flex';
+    renderGarmentList();
+    renderGarmentAlphabet();
+}
+
+function closeGarmentModal() {
+    document.getElementById('garmentModal').style.display = 'none';
+    currentWeightService = null;
+}
+
+function renderGarmentList() {
+    const list = document.getElementById('garmentList');
+    list.innerHTML = '';
+    
+    const sortedProducts = Object.keys(allProducts).sort();
+    
+    sortedProducts.forEach(pName => {
+        // Filter out the main weight product itself to avoid confusion
+        if (pName.toLowerCase().includes('laundry by weight')) return;
+
+        // Iterate over all types for this product
+        const types = Object.keys(allProducts[pName]);
+
+        types.forEach(pType => {
+            const div = document.createElement('div');
+            div.className = 'garment-item';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            div.style.padding = '8px';
+            div.style.borderBottom = '1px solid #f0f0f0';
+            
+            div.dataset.comments = '[]';
+            // Create unique name for comment (e.g., "Shirt (Men)")
+            const uniqueName = `${pName} (${pType})`;
+
+            div.innerHTML = `
+                <div style="flex: 2; display:flex; align-items:center;">
+                    <span style="font-weight:500;">${pName}</span>
+                    <button style="margin-left:8px; padding:2px 8px; border:1px solid #00aaff; background:#e1f5fe; color:#007bb5; border-radius:12px; font-size:11px; cursor:default;">${pType}</button>
+                </div>
+                <div style="flex: 3; cursor:pointer;" onclick="openItemCommentsModal(this)">
+                    <div class="item-comments-display" style="min-height: 25px; padding: 4px; border-radius: 4px; border: 1px dashed #ccc; display: flex; flex-wrap: wrap; gap: 3px; align-items: center;">
+                        <span style="color:#999; font-style:italic; font-size:12px;">Add Comments</span>
+                    </div>
+                </div>
+                <div style="flex: 1.5; display:flex; align-items:center; justify-content: flex-end; gap:8px;">
+                    <button onclick="updateGarmentCount(this, -1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #ccc; background:#f8f9fa; cursor:pointer; font-weight:bold;">-</button>
+                    <input type="number" class="garment-count" data-name="${uniqueName}" value="0" min="0" style="width:40px; text-align:center; padding:4px; border:1px solid #ddd; border-radius:4px;" readonly>
+                    <button onclick="updateGarmentCount(this, 1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #ccc; background:#f8f9fa; cursor:pointer; font-weight:bold;">+</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    });
+}
+
+function updateGarmentCount(btn, change) {
+    const input = btn.parentElement.querySelector('input');
+    let val = parseInt(input.value) || 0;
+    val += change;
+    if (val < 0) val = 0;
+    input.value = val;
+    
+    const row = btn.closest('.garment-item');
+    if (val > 0) row.style.backgroundColor = '#e3f2fd';
+    else row.style.backgroundColor = 'transparent';
+}
+
+function filterGarments() {
+    const term = document.getElementById('garmentSearch').value.toLowerCase();
+    const items = document.querySelectorAll('.garment-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.includes(term) ? 'flex' : 'none';
+    });
+}
+
+function confirmGarments() {
+    if (!currentWeightService) return;
+    
+    const weight = parseFloat(document.getElementById('garmentWeight').value);
+    if (!weight || weight <= 0) {
+        alert("Please enter a valid weight.");
+        document.getElementById('garmentWeight').focus();
+        return;
+    }
+    
+    const selectedGarments = [];
+    document.querySelectorAll('.garment-item').forEach(itemRow => {
+        const countInput = itemRow.querySelector('.garment-count');        
+        const count = parseInt(countInput.value);
+        if (count > 0) {
+            const name = countInput.dataset.name;
+            const commentsArray = JSON.parse(itemRow.dataset.comments || '[]');
+            const commentString = commentsArray.join(', ');
+            
+            let garmentString = `${name}-${count}`;
+            if (commentString) {
+                garmentString += `: ${commentString}`;
+            }
+            selectedGarments.push(garmentString);
+        }
+    });
+    
+    addItem(
+        currentWeightService.name,
+        currentWeightService.type,
+        currentWeightService.service,
+        currentWeightService.price,
+        weight, // Use the new weight value
+        selectedGarments,
+        'Kg'
+    );
+    
+    closeGarmentModal();
+}
+
+function renderGarmentAlphabet() {
+    const bar = document.getElementById('garmentAlphabetBar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    
+    const btnStyle = "background:#d0e7ff; border:none; margin:2px; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold; color:#1976d2;";
+    
+    // All button
+    const allBtn = document.createElement("button");
+    allBtn.textContent = "All";
+    allBtn.style.cssText = btnStyle + "background:#1976d2; color:white;";
+    allBtn.onclick = function() { 
+        filterGarmentsByLetter('All');
+        highlightAlphaBtn(this);
+    };
+    bar.appendChild(allBtn);
+
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => {
+        const btn = document.createElement("button");
+        btn.textContent = l;
+        btn.style.cssText = btnStyle;
+        btn.onclick = function() { 
+            filterGarmentsByLetter(l);
+            highlightAlphaBtn(this);
+        };
+        bar.appendChild(btn);
+    });
+}
+
+function highlightAlphaBtn(activeBtn) {
+    const bar = document.getElementById('garmentAlphabetBar');
+    const btns = bar.getElementsByTagName('button');
+    for(let btn of btns) {
+        btn.style.background = '#d0e7ff';
+        btn.style.color = '#1976d2';
+    }
+    activeBtn.style.background = '#1976d2';
+    activeBtn.style.color = 'white';
+}
+
+function filterGarmentsByLetter(letter) {
+    const items = document.querySelectorAll('.garment-item');
+    items.forEach(item => {
+        // The product name is in the first span inside the first div
+        const nameDiv = item.children[0];
+        const nameSpan = nameDiv.querySelector('span');
+        
+        if (nameSpan) {
+            const text = nameSpan.innerText.toUpperCase();
+            if (letter === 'All' || text.startsWith(letter)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+}
+
+// --- Item Comments Modal Logic ---
+let currentItemCommentsButton = null;
+const predefinedComments = ["Hole", "Missing Button", "No Guarantee For Stain", "Bleach Mark", "Colour Stain", "Fragile Garment", "Fungus Stain", "Pressing Mark", "Print Damaged", "Risk Of Damage", "Stich Open", "Thread Loose", "Torn"];
+
+function openItemCommentsModal(element) {
+    currentItemCommentsButton = element;
+    const modal = document.getElementById('itemCommentsModal');
+    const grid = document.getElementById('itemCommentsGrid');
+    grid.innerHTML = ''; // Clear previous buttons
+
+    const garmentItemRow = currentItemCommentsButton.closest('.garment-item');
+    const currentComments = JSON.parse(garmentItemRow.dataset.comments || '[]');
+
+    // Populate with buttons
+    predefinedComments.forEach(comment => {
+        const btn = document.createElement('button');
+        btn.textContent = comment;
+        btn.style.cssText = "padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; cursor: pointer; text-align: center;";
+        
+        if (currentComments.includes(comment)) {
+            btn.classList.add('selected');
+            btn.style.background = '#d0e7ff';
+            btn.style.borderColor = '#1976d2';
+        }
+
+        btn.onclick = function() {
+            this.classList.toggle('selected');
+            if (this.classList.contains('selected')) {
+                this.style.background = '#d0e7ff';
+                this.style.borderColor = '#1976d2';
+            } else {
+                this.style.background = '#f9f9f9';
+                this.style.borderColor = '#ccc';
+            }
+        };
+        grid.appendChild(btn);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function closeItemCommentsModal() {
+    document.getElementById('itemCommentsModal').style.display = 'none';
+    currentItemCommentsButton = null;
+}
+
+function saveItemComments() {
+    if (!currentItemCommentsButton) return;
+
+    const selectedComments = [];
+    document.querySelectorAll('#itemCommentsGrid button.selected').forEach(btn => {
+        selectedComments.push(btn.textContent);
+    });
+
+    const garmentItemRow = currentItemCommentsButton.closest('.garment-item');
+    garmentItemRow.dataset.comments = JSON.stringify(selectedComments);
+
+    const displayDiv = currentItemCommentsButton.querySelector('.item-comments-display');
+    if (selectedComments.length > 0) {
+        displayDiv.innerHTML = selectedComments.map(c => `<span style="background: #ffebcd; color: #856404; padding: 2px 5px; border-radius: 3px; font-size: 11px; margin:1px;">${c}</span>`).join('');
+    } else {
+        displayDiv.innerHTML = '<span style="color:#999; font-style:italic; font-size:12px;">Add Comments</span>';
+    }
+
+    closeItemCommentsModal();
+}
+
+function toggleGarmentDetails(event, listId) {
+    event.stopPropagation(); // Prevent click from bubbling up to document
+    const list = document.getElementById(listId);
+    if (list) {
+        // Close all other detail lists first
+        document.querySelectorAll('[id^="garment-list-"]').forEach(otherList => {
+            if (otherList.id !== listId) {
+                otherList.style.display = 'none';
+            }
+        });
+        // Toggle the current one
+        list.style.display = list.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// Add a global click listener to close the dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+    document.querySelectorAll('[id^="garment-list-"]').forEach(list => {
+        if (list.style.display === 'block' && !list.contains(event.target) && !list.parentElement.contains(event.target)) {
+            list.style.display = 'none';
+        }
+    });
+});
+
+function getKgItemCellHTML(name, type, item_comments, itemId) {
+    let html = `${name} (${type})`;
+    
+    let totalGarments = 0;
+    item_comments.forEach(g => {
+        let qtyPart = g;
+        if (g.includes(':')) {
+            qtyPart = g.split(':')[0];
+        }
+        const lastDash = qtyPart.lastIndexOf('-');
+        if (lastDash !== -1) {
+             const q = parseInt(qtyPart.substring(lastDash + 1));
+             if (!isNaN(q)) totalGarments += q;
+        }
+    });
+
+    const garmentListId = `garment-list-${itemId}`;
+    
+    let rowsHTML = '';
+    item_comments.forEach((g, index) => {
+        let nameTypeQty = g;
+        let comments = '-';
+        
+        const colonIndex = g.indexOf(':');
+        if (colonIndex !== -1) {
+            nameTypeQty = g.substring(0, colonIndex);
+            comments = g.substring(colonIndex + 1).trim();
+            if(!comments) comments = '-';
+        }
+        
+        const lastDash = nameTypeQty.lastIndexOf('-');
+        let nameType = nameTypeQty;
+        let qty = '';
+        
+        if (lastDash !== -1) {
+            nameType = nameTypeQty.substring(0, lastDash);
+            qty = nameTypeQty.substring(lastDash + 1);
+        }
+        
+        rowsHTML += `
+          <tr>
+              <td style="border:1px solid #eee; padding:4px; text-align:center;">${index + 1}</td>
+              <td style="border:1px solid #eee; padding:4px;">${nameType}</td>
+              <td style="border:1px solid #eee; padding:4px;">${comments}</td>
+              <td style="border:1px solid #eee; padding:4px; text-align:center;">${qty}</td>
+              <td style="border:1px solid #eee; padding:4px; text-align:center;">
+                  <button onclick="removeGarmentFromList(event, '${itemId}', ${index})" style="background:#ff4444; color:white; border:none; border-radius:3px; cursor:pointer; padding:2px 6px; font-size:10px;">❌</button>
+              </td>
+          </tr>
+        `;
+    });
+
+    const detailsDropdownHTML = `
+        <div style="margin-top: 5px;">
+            <span style="font-size: 12px; color: #555; font-weight: bold;">Total Garments: ${totalGarments}</span>
+            <div style="display: inline-block; position: relative; margin-left: 10px;">
+                <button onclick="toggleGarmentDetails(event, '${garmentListId}')" style="background: #3498db; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Details</button>
+                <div id="${garmentListId}" style="display: none; position: absolute; background: white; border: 1px solid #ccc; padding: 10px; z-index: 10; left: 0; min-width: 450px; text-align: left; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                      <thead>
+                          <tr style="background:#f0f0f0;">
+                              <th style="border:1px solid #eee; padding:4px;">#</th>
+                              <th style="border:1px solid #eee; padding:4px;">Product</th>
+                              <th style="border:1px solid #eee; padding:4px;">Comments</th>
+                              <th style="border:1px solid #eee; padding:4px;">Qty</th>
+                              <th style="border:1px solid #eee; padding:4px;">Action</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${rowsHTML || '<tr><td colspan="5" style="text-align:center;">No garments specified.</td></tr>'}
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    return html + detailsDropdownHTML;
+}
+
+function removeGarmentFromList(event, itemId, index) {
+    event.stopPropagation();
+    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+    if (!row) return;
+    
+    let comments = JSON.parse(row.dataset.comments || '[]');
+    comments.splice(index, 1);
+    row.dataset.comments = JSON.stringify(comments);
+    
+    const name = row.dataset.itemName;
+    const type = row.dataset.itemType;
+    
+    row.cells[0].innerHTML = getKgItemCellHTML(name, type, comments, itemId);
+    
+    const list = document.getElementById(`garment-list-${itemId}`);
+    if(list) list.style.display = 'block';
+}
 </script>
 </div>
 
@@ -2420,6 +2822,38 @@ document.querySelector('.create-btn').disabled = true;
 </script>
 <?php endif; ?>
 
-</body>
+<!-- GARMENT SELECTION MODAL -->
+<div id="garmentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10002; justify-content:center; align-items:center;">
+    <div style="background:white; width:700px; max-height:85vh; padding:20px; border-radius:10px; display:flex; flex-direction:column; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; color:#1976d2;">Select Garments</h3>
+        <input type="text" id="garmentSearch" placeholder="Search garments..." onkeyup="filterGarments()" style="padding:10px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px; width:100%; box-sizing:border-box;">
+        <div id="garmentAlphabetBar" style="text-align:center; margin-bottom:10px; overflow-x:auto; white-space:nowrap; padding-bottom:5px; min-height:40px;"></div>
+        <div id="garmentList" style="flex:1; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:15px;">
+            <!-- Items will be populated here -->
+        </div>
+        <div style="margin-bottom: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+            <label for="garmentWeight" style="font-weight: bold; font-size: 16px;">Total Weight (Kg):</label>
+            <input type="number" id="garmentWeight" value="1.0" step="0.1" min="0.1" style="width: 100px; padding: 8px; font-size: 16px; text-align: center; border: 1px solid #1976d2; border-radius: 5px; margin-left: 10px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeGarmentModal()" style="background:#666; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cancel</button>
+            <button onclick="confirmGarments()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Add to Order</button>
+        </div>
+    </div>
+</div>
+
+<!-- ITEM COMMENTS MODAL -->
+<div id="itemCommentsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10003; justify-content:center; align-items:center;">
+    <div style="background:white; width:450px; max-height:90vh; padding:20px; border-radius:10px; display:flex; flex-direction:column; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; color:#1976d2;">Select Comments</h3>
+        <div id="itemCommentsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; overflow-y: auto;">
+            <!-- Predefined comment buttons will be populated here -->
+        </div>
+        <div style="margin-top: auto; display:flex; justify-content:flex-end; gap:10px; border-top: 1px solid #eee; padding-top: 15px;">
+            <button onclick="closeItemCommentsModal()" style="background:#666; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cancel</button>
+            <button onclick="saveItemComments()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Save Comments</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
