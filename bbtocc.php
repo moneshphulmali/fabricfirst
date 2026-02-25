@@ -639,6 +639,7 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
         <?php
         $subtotal = 0;
         $item_count = 1;
+        $total_garments = 0;
         
         if (!empty($items) && is_array($items)) {
             foreach($items as $item) {
@@ -659,25 +660,58 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
                 if (!is_array($comments)) {
                     $comments = [];
                 }
+
+                // Calculate total garments
+                if (stripos($product_name, 'laundry by weight') !== false) {
+                    if (!empty($comments) && is_array($comments)) {
+                        foreach ($comments as $garment) {
+                            $parts = explode(':', $garment);
+                            $nameAndQty = $parts[0];
+                            $lastHyphenPos = strrpos($nameAndQty, '-');
+                            if ($lastHyphenPos !== false) {
+                                $garmentQty = intval(substr($nameAndQty, $lastHyphenPos + 1));
+                                $total_garments += $garmentQty;
+                            }
+                        }
+                    }
+                } else {
+                    $total_garments += $qty;
+                }
                 
+                // Prepare display variables
+                $product_display_html = htmlspecialchars($product_name);
+                $comments_display_html = "-";
+
+                // Check if it's a "Laundry By Weight" item to show garment list
+                if (stripos($product_name, 'laundry by weight') !== false) {
+                    if (!empty($comments) && is_array($comments)) {
+                        $product_display_html .= "<ol style='margin: 5px 0 0 15px; padding-left: 10px; text-align: left; font-size: 12px; color: #333;'>";
+                        foreach ($comments as $garment) {
+                            $product_display_html .= "<li>" . htmlspecialchars($garment) . "</li>";
+                        }
+                        $product_display_html .= "</ol>";
+                        // Comments are shown in product column, so this column is empty
+                        $comments_display_html = "-";
+                    }
+                } else {
+                    // For regular items, show comments as badges
+                    if (!empty($comments) && is_array($comments)) {
+                        $comments_display_html = "";
+                        foreach($comments as $comment) {
+                            $comments_display_html .= "<span class='comments-badge'>" . htmlspecialchars($comment) . "</span>";
+                        }
+                    }
+                }
+
                 echo "<tr>
                     <td>{$item_count}</td>
-                    <td>" . htmlspecialchars($product_name) . "</td>
+                    <td>{$product_display_html}</td>
                     <td>" . htmlspecialchars($service_type) . "</td>
                     <td>" . htmlspecialchars($qty) . " " . $unit . "</td>
                     <td>₹" . number_format($price, 2) . "</td>
                     <td>₹" . number_format($itemTotal, 2) . "</td>
-                    <td class='comments-cell'>";
-                
-                if (!empty($comments) && is_array($comments)) {
-                    foreach($comments as $comment) {
-                        echo "<span class='comments-badge'>" . htmlspecialchars($comment) . "</span>";
-                    }
-                } else {
-                    echo "-";
-                }
-                
-                echo "</td></tr>";
+                    <td class='comments-cell'>{$comments_display_html}</td>
+                </tr>";
                 $item_count++;
             }
         } else {
@@ -689,6 +723,11 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
             <tr>
                 <td colspan="5" class="total">Total Amount:</td>
                 <td colspan="2">₹<?php echo number_format($subtotal, 2); ?></td>
+            </tr>
+            
+            <tr>
+                <td colspan="5" class="total">Total Garments:</td>
+                <td colspan="2"><?php echo $total_garments; ?> Pcs</td>
             </tr>
             
             <?php if($express > 0): ?>

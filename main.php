@@ -711,6 +711,28 @@ $payment_update->close();
                 $stmt_update->execute();
                 $stmt_update->close();
             }
+            
+            // ✅ INSERT INTO order_item_byweight (Laundry By Weight Data)
+            // First delete existing for this order (for edits)
+            $conn->query("DELETE FROM order_item_byweight WHERE order_id = $order_id");
+            
+            $stmt_weight = $conn->prepare("INSERT INTO order_item_byweight (order_id, storeid, product_name, product_type, service_type, comments, qty) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            
+            foreach ($items as $item) {
+                $p_name = isset($item["item"]) ? trim($item["item"]) : '';
+                // Check if Laundry By Weight
+                if (stripos($p_name, 'laundry by weight') !== false) {
+                    $p_type = $item["product_type"] ?? '';
+                    $s_type = isset($item["service"]) ? trim($item["service"]) : '';
+                    $quantity = isset($item["qty"]) ? floatval($item["qty"]) : 0;
+                    $comments_arr = $item["comments"] ?? [];
+                    $comments_str = is_array($comments_arr) ? json_encode($comments_arr, JSON_UNESCAPED_UNICODE) : (string)$comments_arr;
+                    
+                    $stmt_weight->bind_param("iissssd", $order_id, $storeid, $p_name, $p_type, $s_type, $comments_str, $quantity);
+                    $stmt_weight->execute();
+                }
+            }
+            $stmt_weight->close();
 
             // ✅ COMMIT TRANSACTION
             $conn->commit();
@@ -1481,7 +1503,7 @@ function loadExistingOrderItems() {
             data.items.forEach(item => {
                 addItem(
                     item.product_name || item.item || '',
-                    '', // product type
+                    item.product_type || '', // product type
                     item.service_type || item.service || '',
                     parseFloat(item.price || 0),
                     parseFloat(item.qty || 1), // Use parseFloat
@@ -1725,8 +1747,11 @@ function showServices(name, type) {
   
   services.forEach(s => {
     let addGarmentsBtn = "";
+    let addBtnHTML = `<button class="add-btn" onclick="addItem('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add</button>`;
+
     if (name.toLowerCase().includes('laundry by weight')) {
-        addGarmentsBtn = `<button class="add-btn" style="background:#ff9800; margin-left:5px;" onclick="openGarmentModal('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add Garments</button>`;
+        addGarmentsBtn = `<button class="add-btn" style="background:#ff9800;" onclick="openGarmentModal('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add Garments</button>`;
+        addBtnHTML = ''; // Hide the simple "Add" button for weight items
     }
 
     const serviceDiv = document.createElement("div");
@@ -1743,8 +1768,9 @@ function showServices(name, type) {
         <span style="color:#1976d2; margin-left:10px;">₹${s.price}</span>
       </div>
       <div>
-        <button class="add-btn" onclick="addItem('${escapeHtml(name)}','${escapeHtml(type)}','${escapeHtml(s.service_type)}',${s.price})">Add</button>
-        ${addGarmentsBtn}
+        ${addBtnHTML} <!-- Simple "Add" button -->
+        ${addGarmentsBtn}    <!-- Ye sirf weight wale items ke liye dikhega -->
+
       </div>
     `;
     
@@ -2125,6 +2151,7 @@ function saveOrder() {
         
         items.push({
             item: itemName,
+            product_type: row.dataset.itemType || '',
             service: serviceName,
             qty: parseFloat(row.dataset.qty),
             price: parseFloat(row.dataset.price),

@@ -2401,3 +2401,25 @@ Array
 )
 
 ---
+Array
+(
+    [time] => 2026-02-25 13:58:05
+    [mobile] => 9923642693
+    [message] => Hello UKG, Your order #29 has been created. Amount: Rs.118. Delivery: 24/02/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-02-25 14:02:44
+    [mobile] => 9863459862
+    [message] => Hello Rajkumar, Your order #30 has been created. Amount: Rs.496. Delivery: 27/02/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
