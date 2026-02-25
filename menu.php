@@ -7,6 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $user = $_SESSION['user'] ?? null;
+$is_admin = ($user && isset($user['is_admin']) && $user['is_admin']);
+$store_count = ($is_admin && isset($user['stores'])) ? count($user['stores']) : 0;
 
 // 🟦 Current page identify
 $current = basename($_SERVER['PHP_SELF']);
@@ -18,8 +20,13 @@ $current = basename($_SERVER['PHP_SELF']);
   <button class="menu-btn" onclick="toggleSidebar()">☰</button>
   
  <!--  <h1 class="header-title"><?php echo htmlspecialchars($user['store_name'] ?? 'FABRIC FIRST'); ?></h1> -->
- <h1 class="header-title"><?php echo htmlspecialchars($user['current_store']['store_name'] ?? 'FABRIC FIRST'); ?></h1>
-  
+ <h1 class="header-title"><?php echo htmlspecialchars($is_admin ? '' : ($user['current_store']['store_name'] ?? 'FABRIC FIRST')); ?></h1>
+
+ <!-- ADMIN STORE COUNT -->
+  <?php if ($is_admin && $store_count > 0): ?>
+    <div class="admin-store-count">Total Stores: <?= $store_count ?></div>
+  <?php endif; ?>
+
   
 </div>
 
@@ -118,6 +125,17 @@ left: -20px;
   color: #00aaff;
 }
 
+/* 🔥 ADMIN STORE COUNT STYLES 🔥 */
+.admin-store-count {
+  margin-left: auto;
+  margin-right: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #00aaff;
+  background: #e8f4fd;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
 /* Adjust menu button for header */
 .menu-btn {
   font-size: 20px;

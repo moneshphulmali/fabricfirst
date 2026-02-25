@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && !isset
         $login_error = "Please enter username, password, and role.";
     } else {
         // 1. PEHLE users TABLE SE USER CHECK KARO
-        $stmt = $conn->prepare("
+        $stmt = $conn->prepare("  
             SELECT user_id, login_id, name, phone, password 
             FROM users 
             WHERE login_id = ? OR phone = ?
