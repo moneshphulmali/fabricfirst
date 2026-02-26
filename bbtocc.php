@@ -1121,26 +1121,75 @@ function showTagInfo(order_id) {
 
         let labels = [];
         let totalProducts = 0;
+        
+        // 1. Calculate Total Count
         data.items.forEach(item => {
-            totalProducts += Number(item.qty) || 1;
+            if (item.product.toLowerCase().includes('laundry by weight')) {
+                if (item.comments && Array.isArray(item.comments)) {
+                    item.comments.forEach(c => {
+                        let parts = c.split(':');
+                        let itemPart = parts[0]; 
+                        let lastDash = itemPart.lastIndexOf('-');
+                        if (lastDash !== -1) {
+                            let q = parseInt(itemPart.substring(lastDash + 1));
+                            if (!isNaN(q)) totalProducts += q;
+                        }
+                    });
+                }
+            } else {
+                totalProducts += Number(item.qty) || 1;
+            }
         });
 
+        // 2. Generate Labels
         data.items.forEach(item => {
-            let qty = Math.ceil(Number(item.qty) || 1); // Tag ke liye round up karein (1.5kg = 2 tags or 1 tag logic)
-            let itemComments = item.comments || [];
-            
-            for (let i = 0; i < qty; i++) {
-                labels.push({
-                    customer: data.customerName,
-                    order: data.orderNo,
-                    delivery: data.deliveryDate,
-                    product: item.product,
-                    service: item.service_type,
-                    payment: data.paymentStatus,
-                    total: totalProducts,
-                    comments: itemComments,
-                    owner_name: data.owner_name
-                });
+            if (item.product.toLowerCase().includes('laundry by weight')) {
+                if (item.comments && Array.isArray(item.comments)) {
+                    item.comments.forEach(c => {
+                        let parts = c.split(':');
+                        let itemPart = parts[0].trim();
+                        let commentPart = parts.length > 1 ? parts.slice(1).join(':').trim() : "";
+                        
+                        let lastDash = itemPart.lastIndexOf('-');
+                        if (lastDash !== -1) {
+                            let garmentName = itemPart.substring(0, lastDash).trim();
+                            let qty = parseInt(itemPart.substring(lastDash + 1));
+                            
+                            if (!isNaN(qty) && qty > 0) {
+                                for (let i = 0; i < qty; i++) {
+                                    labels.push({
+                                        customer: data.customerName,
+                                        order: data.orderNo,
+                                        delivery: data.deliveryDate,
+                                        product: garmentName,
+                                        service: item.service_type,
+                                        payment: data.paymentStatus,
+                                        total: totalProducts,
+                                        comments: commentPart ? [commentPart] : [],
+                                        owner_name: data.owner_name
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                let qty = Number(item.qty) || 1;
+                let itemComments = item.comments || [];
+                
+                for (let i = 0; i < qty; i++) {
+                    labels.push({
+                        customer: data.customerName,
+                        order: data.orderNo,
+                        delivery: data.deliveryDate,
+                        product: item.product,
+                        service: item.service_type,
+                        payment: data.paymentStatus,
+                        total: totalProducts,
+                        comments: itemComments,
+                        owner_name: data.owner_name
+                    });
+                }
             }
         });
 
