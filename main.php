@@ -16,6 +16,22 @@ if (!isset($_SESSION['user'])) {
 $storeid = $_SESSION['user']['current_store']['storeid'];  
 $user_id = $_SESSION['user']['user_id'];
 $role = $_SESSION['user']['role'];
+$is_admin = $_SESSION['user']['is_admin'] ?? false;
+
+// ✅ FIX: If Admin and editing an order, switch context to that order's store
+if ($is_admin && isset($_GET['order_id'])) {
+    $req_order_id = intval($_GET['order_id']);
+    $chk_store = $conn->prepare("SELECT storeid FROM orders WHERE id = ?");
+    if ($chk_store) {
+        $chk_store->bind_param("i", $req_order_id);
+        $chk_store->execute();
+        $res_store = $chk_store->get_result();
+        if ($row_store = $res_store->fetch_assoc()) {
+            $storeid = $row_store['storeid'];
+        }
+        $chk_store->close();
+    }
+}
 
 // ✅ EDIT ORDER FUNCTIONALITY - SIMPLE VERSION
 $edit_customer_data = null;  //Meaning: "Edit karne wale customer ka data abhi nahi hai"
@@ -308,6 +324,22 @@ if (isset($_GET['action'])) {
             echo json_encode(["status"=>"error","message"=>"No data received"]);
             exit;
         }
+        
+        // ✅ FIX: If Admin and saving an edited order, switch context to that order's store
+        if ($is_admin && isset($data['edit_order_id']) && $data['edit_order_id'] > 0) {
+            $edit_id = intval($data['edit_order_id']);
+            $chk_store = $conn->prepare("SELECT storeid FROM orders WHERE id = ?");
+            if ($chk_store) {
+                $chk_store->bind_param("i", $edit_id);
+                $chk_store->execute();
+                $res_store = $chk_store->get_result();
+                if ($row_store = $res_store->fetch_assoc()) {
+                    $storeid = $row_store['storeid'];
+                }
+                $chk_store->close();
+            }
+        }
+
 // "Frontend se aaye hue JSON data ko extract karke PHP variables mein convert karna, saath hi missing values ke liye default values set karna"
        
 		$name = $data["name"] ?? "";

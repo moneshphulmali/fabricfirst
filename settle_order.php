@@ -11,6 +11,22 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['current_store'])) {
 
 // ✅ CHANGE 2: Store ID access
 $storeid = $_SESSION['user']['current_store']['storeid'];
+$is_admin = $_SESSION['user']['is_admin'] ?? false;
+
+// ✅ FIX: If Admin, fetch the correct store ID for the requested order
+if ($is_admin && isset($_REQUEST['order_id'])) {
+    $req_order_id = intval($_REQUEST['order_id']);
+    $chk_store = $conn->prepare("SELECT storeid FROM orders WHERE id = ?");
+    if ($chk_store) {
+        $chk_store->bind_param("i", $req_order_id);
+        $chk_store->execute();
+        $res_store = $chk_store->get_result();
+        if ($row_store = $res_store->fetch_assoc()) {
+            $storeid = $row_store['storeid'];
+        }
+        $chk_store->close();
+    }
+}
 
 if ($conn->connect_error) die(json_encode(["error" => "❌ Database connection failed"]));
 
