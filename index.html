@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabrico First | Seoni</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-bg-overlay {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.5));
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+        }
+        /* Custom Logo Animation */
+        .logo-weave:hover rect {
+            fill: #2563eb;
+            transition: fill 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-[#fcfdff] text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-nav border-b border-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <!-- Custom SVG Logo based on uploaded image -->
+                    <svg viewBox="0 0 100 100" class="w-12 h-12 logo-weave" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="35" y="15" width="8" height="28" rx="4" transform="rotate(-45 35 15)" fill="#1e293b"/>
+                        <rect x="55" y="15" width="8" height="28" rx="4" transform="rotate(45 55 15)" fill="#1e293b"/>
+                        <rect x="20" y="35" width="8" height="28" rx="4" transform="rotate(-45 20 35)" fill="#1e293b"/>
+                        <rect x="40" y="35" width="8" height="28" rx="4" transform="rotate(45 40 35)" fill="#1e293b"/>
+                        <rect x="60" y="35" width="8" height="28" rx="4" transform="rotate(-45 60 35)" fill="#1e293b"/>
+                        <rect x="80" y="35" width="8" height="28" rx="4" transform="rotate(45 80 35)" fill="#1e293b"/>
+                        <rect x="40" y="55" width="8" height="28" rx="4" transform="rotate(-45 40 55)" fill="#1e293b"/>
+                        <rect x="60" y="55" width="8" height="28" rx="4" transform="rotate(45 60 55)" fill="#1e293b"/>
+                    </svg>
+                    <span class="text-2xl font-extrabold text-slate-900 tracking-tight">Fabric First</span>
+                </div>
+                
+                <div class="hidden md:flex space-x-10 font-semibold text-slate-600 text-sm">
+                    <a href="#home" class="hover:text-blue-600 transition-colors">Home</a>
+                    <a href="#services" class="hover:text-blue-600 transition-colors">Services</a>
+                    <a href="#pricing" class="hover:text-blue-600 transition-colors">Pricing</a>
+                    <a href="#about" class="hover:text-blue-600 transition-colors">About</a>
+                    <a href="indexing.php" class="hover:text-blue-600 transition-colors">Dashboard</a>
+                    
+                </div>
+
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="tel:+919444187193" class="text-slate-600 font-bold flex items-center gap-2">
+                        <i data-lucide="phone-call" class="w-4 h-4 text-blue-600"></i> +91 9444187193
+                    </a>
+                </div>
+
+                <button class="md:hidden p-2 text-slate-600" onclick="toggleMenu()">
+                    <i data-lucide="menu" id="menu-icon"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Nav Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-blue-50 px-6 py-8 space-y-6 shadow-xl">
+            <a href="#home" onclick="toggleMenu()" class="block text-lg font-bold">Home</a>
+            <a href="#services" onclick="toggleMenu()" class="block text-lg font-bold">Services</a>
+            <a href="#pricing" onclick="toggleMenu()" class="block text-lg font-bold">Pricing</a>
+            <a href="#about" onclick="toggleMenu()" class="block text-lg font-bold">About</a>
+            
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1626806819282-2c1dc01a5e0c?q=80&w=2070&auto=format&fit=crop" 
+                 class="w-full h-full object-cover" 
+                 alt="Laundry Background">
+            <div class="absolute inset-0 hero-bg-overlay"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-5xl md:text-6xl lg:text-8xl font-extrabold text-white leading-[1.1] mb-8">
+                    The Freshness <br><span class="text-gradient">You Deserve</span>
+                </h1>
+                <p class="text-xl text-blue-50/80 mb-10 max-w-xl mx-auto leading-relaxed">
+                    Expert care for your daily wear. From delicate silks to heavy linens, we ensure your garments return cleaner, brighter, and perfectly pressed.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-5 justify-center">
+                    <a href="#contact" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-2xl shadow-blue-900/50 flex items-center justify-center gap-3">
+                        Contact Us <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#services" class="bg-white/10 backdrop-blur-md border-2 border-white/20 text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-3">
+                        Our Services
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-20 border-b border-slate-100 pb-12">
+                <div class="flex items-center gap-4 justify-center">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                        <i data-lucide="timer" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-slate-900 font-bold text-lg">24h Express</h4>
+                        <p class="text-slate-500 text-sm">Rapid turnaround time</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 justify-center">
+                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shrink-0">
+                        <i data-lucide="leaf" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-slate-900 font-bold text-lg">Eco-Friendly</h4>
+                        <p class="text-slate-500 text-sm">Gentle on fabrics & earth</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 justify-center">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shrink-0">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-slate-900 font-bold text-lg">Safe Care</h4>
+                        <p class="text-slate-500 text-sm">100% garment insurance</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-blue-600 font-extrabold tracking-[0.2em] uppercase text-sm mb-4">What We Do</h2>
+                <h3 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">Expert Care for Every Fabric</h3>
+                <p class="text-slate-500 text-lg">We use specialized equipment and premium eco-friendly detergents to ensure your clothes look new for longer.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <!-- Wash & Fold -->
+                <div class="group relative bg-[#f8fbff] rounded-[2rem] overflow-hidden border border-blue-50 transition-all hover:shadow-2xl hover:-translate-y-2">
+                    <div class="h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1517677129300-07b130802f46?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Washing Machine">
+                    </div>
+                    <div class="p-8">
+                        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg -mt-16 relative z-10 mb-6 border-4 border-white">
+                            <i data-lucide="waves" class="text-white w-6 h-6"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-3 text-slate-900">Wash & Fold</h4>
+                        <p class="text-slate-500 leading-relaxed mb-6">Perfect for everyday wear. We sort, wash, dry, and fold your clothes to perfection.</p>
+                        <a href="#contact" class="text-blue-600 font-bold flex items-center gap-2 group/link">
+                            Contact Us <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-hover/link:translate-x-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Dry Cleaning -->
+                <div class="group relative bg-[#f8fbff] rounded-[2rem] overflow-hidden border border-blue-50 transition-all hover:shadow-2xl hover:-translate-y-2">
+                    <div class="h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1489274495757-95c7c837b101?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Suits and Dresses">
+                    </div>
+                    <div class="p-8">
+                        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg -mt-16 relative z-10 mb-6 border-4 border-white">
+                            <i data-lucide="crown" class="text-white w-6 h-6"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-3 text-slate-900">Dry Cleaning</h4>
+                        <p class="text-slate-500 leading-relaxed mb-6">Premium care for suits, silk, and delicate items using eco-friendly cleaning solvents.</p>
+                        <a href="#contact" class="text-blue-600 font-bold flex items-center gap-2 group/link">
+                            Contact Us <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-hover/link:translate-x-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Steam Ironing -->
+                <div class="group relative bg-[#f8fbff] rounded-[2rem] overflow-hidden border border-blue-50 transition-all hover:shadow-2xl hover:-translate-y-2">
+                    <div class="h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1489274495757-95c7c837b101?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Ironing service">
+                    </div>
+                    <div class="p-8">
+                        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg -mt-16 relative z-10 mb-6 border-4 border-white">
+                            <i data-lucide="zap" class="text-white w-6 h-6"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-3 text-slate-900">Steam Ironing</h4>
+                        <p class="text-slate-500 leading-relaxed mb-6">Industrial-grade steam press for a crisp look. Available for shirts, trousers, and ethnic wear.</p>
+                        <a href="#contact" class="text-blue-600 font-bold flex items-center gap-2 group/link">
+                            Contact Us <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-hover/link:translate-x-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-blue-50/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row gap-16 items-center">
+                <div class="lg:w-1/3 text-center lg:text-left">
+                    <h3 class="text-4xl font-extrabold text-slate-900 mb-6">Simple, Honest <span class="text-blue-600">Pricing</span></h3>
+                    <p class="text-slate-500 mb-8 leading-relaxed">No hidden fees or complex subscriptions. Pay for what you need with our transparent per-kg or per-item rates.</p>
+                    <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm inline-block">
+                        <p class="text-sm font-bold text-blue-900 mb-2">Exclusive Offer</p>
+                        <p class="text-slate-500 text-sm">First Order: <span class="text-green-600 font-bold">20% OFF</span></p>
+                    </div>
+                </div>
+                
+                <div class="lg:w-2/3 grid sm:grid-cols-2 gap-6 w-full">
+                    <div class="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-blue-900/5 relative group overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 transition-all group-hover:bg-blue-600/10"></div>
+                        <h5 class="font-extrabold text-slate-400 uppercase tracking-widest text-xs mb-6">Most Common</h5>
+                        <div class="flex items-baseline gap-1 mb-8">
+                            <span class="text-4xl font-black text-slate-900">₹79</span>
+                            <span class="text-slate-400 font-semibold">/kg</span>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-6">Wash & Fold</h4>
+                        <ul class="space-y-4 mb-10 text-slate-600">
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-500"></i> Detergent + Softener</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-500"></i> Hygienic Drying</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-500"></i> Individual Packing</li>
+                        </ul>
+                        <a href="#contact" class="block text-center py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-colors">Contact Us</a>
+                    </div>
+
+                    <div class="bg-blue-600 p-10 rounded-[2.5rem] shadow-2xl shadow-blue-600/30 relative text-white transform lg:scale-105">
+                        <div class="absolute top-6 right-6 bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Premium Care</div>
+                        <h5 class="font-extrabold text-blue-200 uppercase tracking-widest text-xs mb-6">Specialty Items</h5>
+                        <div class="flex items-baseline gap-1 mb-8">
+                            <span class="text-4xl font-black">₹149</span>
+                            <span class="text-blue-200 font-semibold">/pc</span>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-6">Dry Cleaning</h4>
+                        <ul class="space-y-4 mb-10 text-blue-100">
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-blue-300"></i> Suits & Ethnic Wear</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-blue-300"></i> Stain Treatment</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-blue-300"></i> Premium Packaging</li>
+                        </ul>
+                        <a href="#contact" class="block text-center py-4 bg-white text-blue-600 rounded-2xl font-bold hover:bg-blue-50 transition-colors">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-24">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <h2 class="text-blue-600 font-extrabold tracking-[0.2em] uppercase text-sm mb-4">Get In Touch</h2>
+                <h3 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">Contact Us</h3>
+                <p class="text-slate-500 text-lg">Have a question? Fill out the form below and we'll get back to you on WhatsApp.</p>
+            </div>
+    
+            <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl border border-slate-100">
+                <form id="contactForm" class="space-y-6 text-slate-900">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="name" class="text-xs font-black uppercase tracking-wider text-slate-400 ml-1">Your Name</label>
+                            <input type="text" id="name" name="name" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-0 outline-none focus:ring-0 placeholder:text-slate-300 text-sm font-semibold" placeholder="Monesh">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mobile" class="text-xs font-black uppercase tracking-wider text-slate-400 ml-1">Mobile No</label>
+                            <input type="tel" id="mobile" name="mobile" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-0 outline-none focus:ring-0 placeholder:text-slate-300 text-sm font-semibold" placeholder="9876543210">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="subject" class="text-xs font-black uppercase tracking-wider text-slate-400 ml-1">Subject</label>
+                        <input type="text" id="subject" name="subject" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-0 outline-none focus:ring-0 placeholder:text-slate-300 text-sm font-semibold" placeholder="Service Inquiry">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="message" class="text-xs font-black uppercase tracking-wider text-slate-400 ml-1">Message</label>
+                        <textarea id="message" name="message" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-0 outline-none focus:ring-0 placeholder:text-slate-300 text-sm font-semibold" rows="4" placeholder="How can we help?"></textarea>
+                    </div>
+    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">
+                        Send on WhatsApp
+                    </button>
+                </form>
+                <div id="contactMsg" class="mt-6 p-4 bg-green-50 text-green-700 text-center rounded-2xl font-bold hidden border border-green-100 flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> Redirecting to WhatsApp...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-3 mb-8">
+                        <svg viewBox="0 0 100 100" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="35" y="15" width="8" height="28" rx="4" transform="rotate(-45 35 15)" fill="#1e3a8a"/>
+                            <rect x="55" y="15" width="8" height="28" rx="4" transform="rotate(45 55 15)" fill="#1e3a8a"/>
+                            <rect x="20" y="35" width="8" height="28" rx="4" transform="rotate(-45 20 35)" fill="#1e3a8a"/>
+                            <rect x="40" y="35" width="8" height="28" rx="4" transform="rotate(45 40 35)" fill="#1e3a8a"/>
+                            <rect x="60" y="35" width="8" height="28" rx="4" transform="rotate(-45 60 35)" fill="#1e3a8a"/>
+                            <rect x="80" y="35" width="8" height="28" rx="4" transform="rotate(45 80 35)" fill="#1e3a8a"/>
+                            <rect x="40" y="55" width="8" height="28" rx="4" transform="rotate(-45 40 55)" fill="#1e3a8a"/>
+                            <rect x="60" y="55" width="8" height="28" rx="4" transform="rotate(45 60 55)" fill="#1e3a8a"/>
+                        </svg>
+                        <span class="text-xl font-black text-blue-900 tracking-tight"> Fabric First</span>
+                    </div>
+                    <p class="text-slate-500 mb-8 leading-relaxed text-sm">Expert fabric care at your fingertips. Bringing the best laundry experience to your doorstep in Seoni.</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-green-600 hover:text-white transition-all"><i data-lucide="message-circle" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h6 class="font-black text-slate-900 uppercase tracking-widest text-xs mb-8">Company</h6>
+                    <ul class="space-y-4 text-slate-500 text-sm font-semibold">
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Our Story</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Safety First</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Careers</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Impact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="font-black text-slate-900 uppercase tracking-widest text-xs mb-8">Quick Links</h6>
+                    <ul class="space-y-4 text-slate-500 text-sm font-semibold">
+                        <li><a href="#services" class="hover:text-blue-600 transition-colors">Bulk Cleaning</a></li>
+                        <li><a href="#pricing" class="hover:text-blue-600 transition-colors">Pricing Plans</a></li>
+                        <li><a href="#contact" class="hover:text-blue-600 transition-colors">Contact Us</a></li>
+                        <li><a href="#contact" class="hover:text-blue-600 transition-colors">Support</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="font-black text-slate-900 uppercase tracking-widest text-xs mb-8">Contact Us</h6>
+                    <ul class="space-y-4 text-slate-500 text-sm font-semibold">
+                        <li class="flex items-center gap-3"><i data-lucide="mail" class="w-4 h-4 text-blue-600"></i> sachinsanodiya175@gmail.com</li>
+                        <li class="flex items-center gap-3"><i data-lucide="phone" class="w-4 h-4 text-blue-600"></i> +91 9444187193</li>
+                        <li class="flex items-center gap-3"><i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i> Seoni Maharashtra 441106 </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-slate-400 text-xs font-semibold">&copy; 2024 Fabric First Laundry Services. Crafted with Cleanliness.</p>
+                <div class="flex gap-8 text-xs font-bold text-slate-400">
+                    <a href="#" class="hover:text-blue-600">Privacy</a>
+                    <a href="#" class="hover:text-blue-600">Terms</a>
+                    <a href="#" class="hover:text-blue-600">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/919444187193" target="_blank" rel="noopener noreferrer" class="fixed bottom-8 right-8 bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all transform hover:scale-110 z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="white" stroke="currentColor" stroke-width="0" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.395 0 .01 5.385.008 12.037c0 2.125.556 4.2 1.611 6.027L0 24l6.117-1.605a11.845 11.845 0 005.933 1.598h.005c6.654 0 12.04-5.385 12.042-12.037a11.817 11.817 0 00-3.51-8.492"/>
+        </svg>
+    </a>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const mobile = document.getElementById('mobile').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            const whatsappNumber = '919444187193';
+            
+            let whatsappMessage = `New Inquiry from Website\n\n`;
+            whatsappMessage += `Name: ${name}\n`;
+            whatsappMessage += `Mobile: ${mobile}\n`;
+            whatsappMessage += `Subject: ${subject}\n`;
+            whatsappMessage += `Message: ${message}`;
+
+            const encodedMessage = encodeURIComponent(whatsappMessage);
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+            window.open(whatsappUrl, '_blank');
+
+            const form = this;
+            const btn = form.querySelector('button');
+            const msgDiv = document.getElementById('contactMsg');
+
+            btn.disabled = true;
+            btn.innerText = 'Redirecting...';
+            msgDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                form.reset();
+                btn.disabled = false;
+                btn.innerText = 'Send on WhatsApp';
+                msgDiv.classList.add('hidden');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
