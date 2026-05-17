@@ -2097,3 +2097,12 @@ Message: Hello Goutam, Your order #32 has been created. Amount: Rs.347. Delivery
 API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
 ========================================
 
+========================================
+Time: 2026-05-17 17:11:26
+Order ID: 33
+Customer: ukg
+Mobile: 9734728942
+Message: Hello ukg, Your order #33 has been created. Amount: Rs.349. Delivery: 17/05/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+

@@ -1921,8 +1921,6 @@ function addItemWithSelectedComments() {
   
   orderTable.appendChild(row);
 
-  grossTotal += price;
-  totalCount += 1;
   recalcAfterChange();
   closeCommentsPanel();
 }
@@ -1991,8 +1989,6 @@ function addItem(name, type, service, price, qty = 1, item_comments = [], unit =
   
   orderTable.appendChild(row);
 
-  grossTotal += (price * qty);
-  totalCount += parseFloat(qty);
   recalcAfterChange();
 }
 
@@ -2073,8 +2069,6 @@ function updateQty(input, price) {
   row.dataset.qty = qty;
   row.querySelector(".price-cell").textContent = `₹${(price * qty).toFixed(2)}`;
 
-  grossTotal += diff * price;
-  totalCount += diff;
   if (totalCount < 0) totalCount = 0;
   recalcAfterChange();
 }
@@ -2084,15 +2078,44 @@ function removeItem(btn) {
   const price = parseFloat(row.dataset.price);
   const qty = parseFloat(row.dataset.qty);
   
-  grossTotal -= price * qty;
-  totalCount -= qty;
-  if (grossTotal < 0) grossTotal = 0;
-  if (totalCount < 0) totalCount = 0;
   row.remove();
   recalcAfterChange();
 }
 
 function recalcAfterChange() {
+  let newGrossTotal = 0;
+  let newTotalCount = 0;
+
+  // टेबल की हर रो (row) को चेक करें
+  document.querySelectorAll("#orderTable tbody tr").forEach(row => {
+    const price = parseFloat(row.dataset.price) || 0;
+    const qty = parseFloat(row.dataset.qty) || 0;
+    const itemName = (row.dataset.itemName || "").toLowerCase();
+    const itemComments = JSON.parse(row.dataset.comments || "[]");
+
+    newGrossTotal += price * qty;
+
+    // अगर यह 'Laundry by weight' है, तो गारमेंट्स की गिनती कमेंट्स से निकालें
+    if (itemName.includes('laundry by weight')) {
+      let weightGarments = 0;
+      itemComments.forEach(c => {
+        let qtyPart = c.includes(':') ? c.split(':')[0] : c;
+        const lastDash = qtyPart.lastIndexOf('-');
+        if (lastDash !== -1) {
+          const q = parseInt(qtyPart.substring(lastDash + 1));
+          if (!isNaN(q)) weightGarments += q;
+        }
+      });
+      newTotalCount += weightGarments;
+    } else {
+      // सामान्य आइटम के लिए सीधी क्वांटिटी जोड़ें
+      newTotalCount += qty;
+    }
+  });
+
+  grossTotal = newGrossTotal;
+  totalCount = newTotalCount;
+
   if (appliedCoupon) {
     discountAmount = (grossTotal * appliedCoupon.percent) / 100;
   } else {
@@ -2919,6 +2942,8 @@ function removeGarmentFromList(event, itemId, index) {
     
     const list = document.getElementById(`garment-list-${itemId}`);
     if(list) list.style.display = 'block';
+    
+    recalcAfterChange();
 }
 </script>
 </div>
