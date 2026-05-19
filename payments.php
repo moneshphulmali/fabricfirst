@@ -105,13 +105,13 @@ if(isset($_GET['action']) && $_GET['action']=='get_payments'){
         $orderPaid[$p['order_id']] = floatval($p['total_paid']);
     }
 
-    // FILTERED DATA
+    // FILTERED DATA // payable_amount to paybal amount
     $result = $conn->query("
         SELECT 
             t.id AS transaction_id,
             o.id AS order_id,
             o.customer_id,
-            o.total_amount,
+            o.payable_amount,  
             o.status,
             t.amount AS Paid_Amount,
             t.payment_mode,
@@ -127,12 +127,12 @@ if(isset($_GET['action']) && $_GET['action']=='get_payments'){
 
     while($row = $result->fetch_assoc()){
         $order_id = $row['order_id'];
-        $total_amount = floatval($row['total_amount']);
+        $payable_amount = floatval($row['payable_amount']);
         $paid_total = $orderPaid[$order_id] ?? 0;
 
         $row['Paid_Amount'] = floatval($row['Paid_Amount']);
-        $row['total_amount'] = $total_amount;
-        $row['Due_Amount'] = $total_amount - $paid_total;
+        $row['payable_amount'] = $payable_amount;
+        $row['Due_Amount'] = $payable_amount - $paid_total;
 
         $payments[] = $row;
     }
@@ -153,7 +153,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['order_id'], $_POST['paid
     $paid_amount = floatval($_POST['paid_amount']);
     $payment_mode = $_POST['payment_mode'];
 
-$res_order = $conn->query("SELECT total_amount FROM orders WHERE id=$order_id AND storeid=$storeid");
+$res_order = $conn->query("SELECT payable_amount FROM orders WHERE id=$order_id AND storeid=$storeid");
     if(!$res_order->num_rows){ echo "❌ Order not found!"; exit; }
 
     $stmt_trans = $conn->prepare("
@@ -252,7 +252,7 @@ async function loadPayments(filter="month"){
         payments.forEach(p=>{
             if(!orderSummary[p.order_id]){
                 orderSummary[p.order_id] = {
-                    total: p.total_amount,
+                    total: p.payable_amount,
                     paid: 0
                 };
             }
@@ -301,7 +301,7 @@ payments.forEach(p=>{
             let ordersSeen = new Set();
 
             grouped[date].forEach(p=>{
-                total += p.total_amount;
+                total += p.payable_amount;
                 paid += p.Paid_Amount;
 
                 if(!ordersSeen.has(p.order_id)){
@@ -324,7 +324,7 @@ payments.forEach(p=>{
                                 <th>Order ID</th>
                                 <th>Customer ID</th>
                                 <th>Payment Mode</th>
-                                <th>Bill Amount (₹)</th>
+                                <th>Payable Amount (₹)</th>
                                 <th>Paid (₹)</th>
                                 <th>Due (₹)</th>
                             </tr>
@@ -335,7 +335,7 @@ payments.forEach(p=>{
                                     <td>${p.order_id}</td>
                                     <td>${p.customer_id}</td>
                                     <td>${p.payment_mode}</td>
-                                    <td>${p.total_amount}</td>
+                                    <td>${p.payable_amount}</td>
                                     <td>${p.Paid_Amount}</td>
                                     <td>${p.Due_Amount}</td>
                                 </tr>`).join("")}

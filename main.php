@@ -306,6 +306,26 @@ if (isset($_GET['action'])) {
         exit;
     }
 
+    // GET EXPRESS CHARGES from DB
+    if ($action == 'get_express_charges') {
+        $sql = "SELECT id, name, percentage FROM express_charges WHERE storeid = ? AND status = 'active' ORDER BY percentage ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $storeid);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $charges = [];
+        while ($row = $result->fetch_assoc()) {
+            $charges[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'percentage' => floatval($row['percentage'])
+            ];
+        }
+        echo json_encode(["status" => "success", "data" => $charges]);
+        exit;
+    }
+
     // SAVE ORDER
     if ($action == 'save_order') {
         // Get raw input
@@ -887,6 +907,19 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
     z-index:10000; 
     overflow-y:auto;
 }
+#expressAmountPanel { 
+    position:fixed; 
+    top:0; 
+    left:-360px; 
+    width:320px; 
+    height:100%; 
+    background:white; 
+    box-shadow:2px 0 8px rgba(0,0,0,0.3); 
+    padding:20px; 
+    transition:0.35s; 
+    z-index:10000; 
+    overflow-y:auto;
+}
 .offer-item { padding:10px;border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;}
 .offer-item small { color:gray; }
 
@@ -1295,8 +1328,9 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
   <hr>
   <div class="summary-row" style="font-weight:bold;"><div>Payable Amount:</div><div>₹<span id="payableAmount">0.00</span></div></div>
 
-  <div style="margin-top:10px;">
+  <div style="margin-top:10px; display: flex; gap: 10px;">
       <button class="coupon-open-btn" onclick="openCouponPanel()">🏷️ Add Coupon</button>
+      <button class="coupon-open-btn" style="background:#00aaff;" onclick="addExpressAmount()">⚡ Express Amount</button>
   </div>
 </div>
 
@@ -1341,6 +1375,15 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
     <button onclick="closeCouponPanel()" style="background:#ff4444;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">Close ✖</button>
     <hr>
     <div id="offerList"></div>
+</div>
+
+<!-- EXPRESS AMOUNT PANEL -->
+<div id="expressAmountPanel">
+    <h2 style="margin-top:0;">⚡ Express Charges</h2>
+    <button onclick="closeExpressAmountPanel()" style="background:#ff4444;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">Close ✖</button>
+    <hr>
+    <div id="expressChargeList"></div>
+    <button id="removeExpressChargeBtn" onclick="removeExpressCharge()" style="background:#ff4444;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer;width:100%;margin-top:20px;display:none;">Remove Express Charge</button>
 </div>
 
 <!-- RIGHT SIDE COMMENTS PANEL -->
@@ -2116,6 +2159,11 @@ function recalcAfterChange() {
   grossTotal = newGrossTotal;
   totalCount = newTotalCount;
 
+  // प्रतिशत के हिसाब से एक्सप्रेस अमाउंट को डायनामिक अपडेट करें
+  if (appliedExpressCharge) {
+    expressAmount = (grossTotal * appliedExpressCharge.percentage) / 100;
+  }
+
   if (appliedCoupon) {
     discountAmount = (grossTotal * appliedCoupon.percent) / 100;
   } else {
@@ -2225,6 +2273,7 @@ function saveOrder() {
         discountAmount: parseFloat(discountAmount.toFixed(2)),
         payableAmount: parseFloat(payableAmount.toFixed(2)),
         coupon: appliedCoupon ? appliedCoupon.code : "",
+        expressAmount: parseFloat(expressAmount.toFixed(2)), // Add expressAmount here
         items: items
     };
 
@@ -2367,6 +2416,19 @@ function loadOffers() {
   const box = document.getElementById("offerList");
   box.innerHTML = "";
   offers.forEach(of => {
+    // Check if this coupon is currently applied
+    const isApplied = appliedCoupon && appliedCoupon.code === of.name;
+    const buttonText = isApplied ? "APPLIED" : "APPLY";
+    const buttonStyle = isApplied 
+        ? "background:#28a745;color:white;padding:6px 10px;border-radius:4px;cursor:default;"
+        : "border:none;background:#00aaff;color:white;padding:6px 10px;border-radius:4px;cursor:pointer;";
+    const buttonOnClick = isApplied ? "" : `applyCoupon('${of.name}', ${of.percent})`;
+
+    // Add a remove button if this coupon is applied
+    const removeButton = isApplied 
+        ? `<button onclick="removeCoupon()" style="background:#ff4444;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer; margin-left: 5px;">REMOVE</button>`
+        : "";
+
     const div = document.createElement("div");
     div.className = "offer-item";
     div.innerHTML = `
@@ -2374,7 +2436,8 @@ function loadOffers() {
         <b>${of.name}</b><br><small>Flat ${of.percent}% off</small>
       </div>
       <div>
-        <button onclick="applyCoupon('${of.name}', ${of.percent})" style="border:none;background:#00aaff;color:white;padding:6px 10px;border-radius:4px;cursor:pointer;">APPLY</button>
+        <button onclick="${buttonOnClick}" style="${buttonStyle}" ${isApplied ? 'disabled' : ''}>${buttonText}</button>
+        ${removeButton}
       </div>
     `;
     box.appendChild(div);
@@ -2391,16 +2454,10 @@ function applyCoupon(code, percent) {
   alert(`🎉 Coupon ${code} applied (${percent}% off)`);
 }
 
-function showRemoveCouponUI() {
-  if (!document.getElementById("removeCouponBtn")) {
-    const btn = document.createElement("button");
-    btn.id = "removeCouponBtn";
-    btn.className = "remove-coupon";
-    btn.textContent = "❌ Remove Coupon";
-    btn.onclick = removeCoupon;
-    document.querySelector(".summary-box").appendChild(btn);
-  }
-}
+// Removed showRemoveCouponUI as the logic is now integrated into loadOffers
+// and the remove button is directly in the panel.
+
+// The existing removeCoupon function is still valid.
 
 function removeCoupon() {
   appliedCoupon = null;
@@ -2408,8 +2465,60 @@ function removeCoupon() {
   payableAmount = Math.max(0, grossTotal - discountAmount + expressAmount);
   updateSummaryUI();
   const btn = document.getElementById("removeCouponBtn");
-  if (btn) btn.remove();
+  if (btn) btn.remove(); // This button is no longer needed in the summary box
+  loadOffers(); // Reload offers to update button state
   alert("Coupon removed");
+}
+
+// Global variable for express charges
+let expressCharges = [];
+let appliedExpressCharge = null;
+
+function addExpressAmount() {
+    openExpressAmountPanel();
+}
+
+function openExpressAmountPanel() {
+    loadExpressCharges();
+    document.getElementById("expressAmountPanel").style.left = "0px";
+}
+
+function closeExpressAmountPanel() {
+    document.getElementById("expressAmountPanel").style.left = "-360px";
+}
+
+function loadExpressCharges() {
+    fetch("?action=get_express_charges")
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === "success") {
+                expressCharges = data.data;
+                const box = document.getElementById("expressChargeList");
+                box.innerHTML = "";
+                expressCharges.forEach(charge => {
+                    const isApplied = appliedExpressCharge && appliedExpressCharge.id === charge.id;
+                    const buttonText = isApplied ? "APPLIED" : "APPLY";
+                    const buttonStyle = isApplied 
+                        ? "background:#28a745;color:white;padding:6px 10px;border-radius:4px;cursor:default;"
+                        : "border:none;background:#00aaff;color:white;padding:6px 10px;border-radius:4px;cursor:pointer;";
+                    const buttonOnClick = isApplied ? "" : `applyExpressCharge(${charge.id}, ${charge.percentage}, '${charge.name}')`;
+
+                    const div = document.createElement("div");
+                    div.className = "offer-item"; // Reusing offer-item class for styling
+                    div.innerHTML = `
+                        <div>
+                            <b>${charge.name}</b><br><small>${charge.percentage}% of Gross Total</small>
+                        </div>
+                        <div>
+                            <button onclick="${buttonOnClick}" style="${buttonStyle}" ${isApplied ? 'disabled' : ''}>${buttonText}</button>
+                        </div>
+                    `;
+                    box.appendChild(div);
+                });
+                document.getElementById("removeExpressChargeBtn").style.display = appliedExpressCharge ? "block" : "none";
+            }
+        })
+        .catch(err => console.error("Error loading express charges:", err));
 }
 
 // Popup functions
@@ -2425,6 +2534,23 @@ function closePopup(){
     } else {
         location.reload();
     }
+}
+
+function applyExpressCharge(id, percentage, name) {
+    appliedExpressCharge = { id, percentage, name, timestamp: Date.now() };
+    expressAmount = (grossTotal * percentage) / 100;
+    recalcAfterChange();
+    closeExpressAmountPanel();
+    alert(`⚡ Express Charge ${name} (${percentage}%) applied!`);
+    loadExpressCharges(); // Reload to update button states
+}
+
+function removeExpressCharge() {
+    appliedExpressCharge = null;
+    expressAmount = 0.0;
+    recalcAfterChange();
+    loadExpressCharges(); // Reload to update button states
+    alert("Express Charge removed.");
 }
 
 function printTag() {
@@ -2559,6 +2685,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     setupRealTimeValidation();
+    
+    // Initialize expressAmount to 0.0 at start
+    expressAmount = 0.0;
+    appliedExpressCharge = null; // Ensure no express charge is applied initially
+
     updateSummaryUI();
     
     // ✅ LOAD EXISTING ORDER ITEMS IF EDITING

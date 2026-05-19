@@ -2106,3 +2106,66 @@ Message: Hello ukg, Your order #33 has been created. Amount: Rs.349. Delivery: 1
 API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
 ========================================
 
+========================================
+Time: 2026-05-17 17:39:17
+Order ID: 34
+Customer: Monesh
+Mobile: 9237589269
+Message: Hello Monesh, Your order #34 has been created. Amount: Rs.623. Delivery: 17/05/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-17 17:42:57
+Order ID: 35
+Customer: monesh
+Mobile: 8364892689
+Message: Hello monesh, Your order #35 has been created. Amount: Rs.328. Delivery: 17/05/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-19 06:37:22
+Order ID: 36
+Customer: olx
+Mobile: 9863458962
+Message: Hello olx, Your order #36 has been created. Amount: Rs.129. Delivery: 19/05/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-19 06:41:33
+Order ID: 37
+Customer: ppp
+Mobile: 8936582368
+Message: Hello ppp, Your order #37 has been created. Amount: Rs.130.9. Delivery: 19/05/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-19 06:55:00
+Order ID: 38
+Customer: aaa
+Mobile: 8936426834
+Message: Hello aaa, Your order #38 has been created. Amount: Rs.284.9. Delivery: 19/05/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-19 07:18:39
+Order ID: 39
+Customer: yesh
+Mobile: 9947562592
+Message: Hello yesh, Your order #39 has been created. Amount: Rs.50. Delivery: 19/05/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-05-19 07:22:12
+Order ID: 40
+Customer: ppppp
+Mobile: 9347592370
+Message: Hello ppppp, Your order #40 has been created. Amount: Rs.140. Delivery: 19/05/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+

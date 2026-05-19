@@ -584,34 +584,35 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
     <html lang="hi">
     <head>
     <meta charset="UTF-8">
-    <title>Invoice #<?php echo htmlspecialchars($order['order_id']); ?></title>
+    <title>POS Invoice #<?php echo htmlspecialchars($order['order_id']); ?></title>
     <style>
-    body { font-family: Arial; background: #f9f9f9; padding: 20px; }
-    .invoice-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.2); max-width: 800px; margin: auto; }
-    h2 { text-align: center; color: #1976d2; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background: #00aaff; color: white; }
-    .total { text-align: right; font-weight: bold; }
+    body { font-family: 'Courier New', Courier, monospace; background: white; margin: 0; padding: 0; width: 80mm; font-size: 12px; color: #000; }
+    .invoice-box { width: 100%; padding: 2mm; box-sizing: border-box; }
+    h2 { text-align: center; font-size: 16px; margin: 5px 0; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+    .info-section { margin-bottom: 10px; font-size: 11px; line-height: 1.4; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 10px; }
+    th, td { border-bottom: 1px dashed #ccc; padding: 4px 1px; text-align: left; }
+    th { border-top: 1px solid #000; border-bottom: 1px solid #000; text-transform: uppercase; font-size: 10px; }
+    .total-area { margin-top: 8px; border-top: 1px solid #000; padding-top: 5px; }
+    .total-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 11px; }
+    .total-label { font-weight: normal; }
+    .total-value { font-weight: bold; }
     .discount-row { color: #d32f2f; }
-    .express-row { color: #388e3c; }
-    .net-total { background: #e8f5e8; font-size: 1.1em; font-weight: bold; }
+    .net-total { font-weight: bold; font-size: 13px; border-top: 1px dashed #000; margin-top: 4px; padding-top: 4px; }
     .comments-cell { font-size: 11px; color: #666; }
-    .comments-badge { 
-        background: #ff9800; 
-        color: white; 
-        padding: 2px 5px; 
-        border-radius: 3px; 
-        margin: 1px;
-        font-size: 10px;
-        display: inline-block;
+    .comments-badge { border: 1px solid #000; padding: 0 2px; margin-right: 2px; font-size: 9px; }
+    .btn-container { text-align: center; margin-top: 20px; }
+    @media print {
+        .no-print { display: none; }
+        body { width: 80mm; margin: 0; }
+        @page { size: 80mm auto; margin: 0; }
     }
     </style>
     </head>
     <body>
     <div class="invoice-box">
-      <h2>🧾 Fabric First</h2>
-      <p>
+      <h2><?php echo htmlspecialchars($order['store_name'] ?? 'Fabric First'); ?></h2>
+      <div class="info-section">
          <b>Invoice ID:</b> <?php echo htmlspecialchars($order['order_id']); ?><br>
          <b>Customer:</b> <?php echo htmlspecialchars($order['customer_name'] ?? 'N/A'); ?><br>
          <b>Mobile:</b> <?php echo htmlspecialchars($order['customer_phone'] ?? 'N/A'); ?><br>
@@ -619,20 +620,16 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
          <b>Coupon Code:</b> <?php echo $coupon_code; ?><br>
          <?php endif; ?>
          <b>Delivery Date:</b> <?php echo htmlspecialchars($order['delivery_date']); ?><br>
-         <b>Order Status:</b> <?php echo htmlspecialchars($order['status']); ?><br>
          <b>Payment Status:</b> <?php echo htmlspecialchars($payment_status); ?>
-      </p>
+      </div>
 
       <table>
         <thead>
             <tr>
-                <th>Sno</th>
-                <th>Product</th>
-                <th>Service</th>
+                <th width="10%">#</th>
+                <th width="45%">Item</th>
                 <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-                <th>Comments</th>
+                <th style="text-align:right;">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -679,13 +676,13 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
                 }
                 
                 // Prepare display variables
-                $product_display_html = htmlspecialchars($product_name);
-                $comments_display_html = "-";
+                $item_info = "<b>" . htmlspecialchars($product_name) . "</b><br><small>" . htmlspecialchars($service_type) . "</small>";
+                $comments_info = "";
 
                 // Check if it's a "Laundry By Weight" item to show garment list
                 if (stripos($product_name, 'laundry by weight') !== false) {
                     if (!empty($comments) && is_array($comments)) {
-                        $product_display_html .= "<ol style='margin: 5px 0 0 15px; padding-left: 10px; text-align: left; font-size: 12px; color: #333;'>";
+                        $product_display_html = $item_info . "<ol style='margin: 2px 0 0 10px; padding-left: 5px; text-align: left; font-size: 10px;'>";
                         foreach ($comments as $garment) {
                             $product_display_html .= "<li>" . htmlspecialchars($garment) . "</li>";
                         }
@@ -696,79 +693,53 @@ if (isset($_GET['invoice']) && isset($_GET['order_id'])) {
                 } else {
                     // For regular items, show comments as badges
                     if (!empty($comments) && is_array($comments)) {
-                        $comments_display_html = "";
                         foreach($comments as $comment) {
-                            $comments_display_html .= "<span class='comments-badge'>" . htmlspecialchars($comment) . "</span>";
+                            $comments_info .= " <span class='comments-badge'>[" . htmlspecialchars($comment) . "]</span>";
                         }
                     }
+                    $product_display_html = $item_info . $comments_info;
                 }
 
                 echo "<tr>
                     <td>{$item_count}</td>
                     <td>{$product_display_html}</td>
-                    <td>" . htmlspecialchars($service_type) . "</td>
-                    <td>" . htmlspecialchars($qty) . " " . $unit . "</td>
-                    <td>₹" . number_format($price, 2) . "</td>
-                    <td>₹" . number_format($itemTotal, 2) . "</td>
-                    <td class='comments-cell'>{$comments_display_html}</td>
+                    <td>" . htmlspecialchars($qty) . "</td>
+                    <td style='text-align:right;'>₹" . number_format($itemTotal, 2) . "</td>
                 </tr>";
                 $item_count++;
             }
         } else {
-            echo "<tr><td colspan='7' style='text-align:center;color:#999;'>No items found</td></tr>";
+            echo "<tr><td colspan='4' style='text-align:center;'>No items</td></tr>";
         }
         ?>
         </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="5" class="total">Total Amount:</td>
-                <td colspan="2">₹<?php echo number_format($subtotal, 2); ?></td>
-            </tr>
-            
-            <tr>
-                <td colspan="5" class="total">Total Garments:</td>
-                <td colspan="2"><?php echo $total_garments; ?> Pcs</td>
-            </tr>
-            
-            <?php if($express > 0): ?>
-            <tr class="express-row">
-                <td colspan="5" class="total">Express Charge:</td>
-                <td colspan="2">+ ₹<?php echo number_format($express, 2); ?></td>
-            </tr>
-            <?php endif; ?>
-            
-            <?php if($discount > 0): ?>
-            <tr class="discount-row">
-                <td colspan="5" class="total">Discount Amount: (<?php echo $discount_percent; ?>%):</td>
-                <td colspan="2"> ₹<?php echo number_format($discount, 2); ?></td>
-            </tr>
-            <?php endif; ?>
-            
-            <tr class="net-total">
-                <td colspan="5" class="total">Payable Amount:</td>
-                <td colspan="2">₹<?php echo number_format($payable, 2); ?></td>
-            </tr>
-            
-            <tr>
-                <td colspan="5" class="total">Paid Amount:</td>
-                <td colspan="2">₹<?php echo number_format($paid, 2); ?></td>
-            </tr>
-            
-            <tr>
-                <td colspan="5" class="total">Due Amount:</td>
-                <td colspan="2">₹<?php echo number_format($due, 2); ?></td>
-            </tr>
-        </tfoot>
       </table>
 
-      <div style="margin-top: 30px; padding-top: 15px; border-top: 1px dashed #ccc; text-align: center; font-size: 12px; color: #666;">
+      <div class="total-area">
+          <div class="total-row"><span>Sub Total:</span> <span>₹<?php echo number_format($subtotal, 2); ?></span></div>
+          <div class="total-row"><span>Items Count:</span> <span><?php echo $total_garments; ?> Pcs</span></div>
+          
+          <?php if($express > 0): ?>
+          <div class="total-row express-row"><span>Express Charge:</span> <span>+ ₹<?php echo number_format($express, 2); ?></span></div>
+          <?php endif; ?>
+          
+          <?php if($discount > 0): ?>
+          <div class="total-row discount-row"><span>Discount (<?php echo $discount_percent; ?>%):</span> <span>- ₹<?php echo number_format($discount, 2); ?></span></div>
+          <?php endif; ?>
+          
+          <div class="total-row net-total"><span>PAYABLE AMOUNT:</span> <span>₹<?php echo number_format($payable, 2); ?></span></div>
+          <div class="total-row"><span>Paid Amount:</span> <span>₹<?php echo number_format($paid, 2); ?></span></div>
+          <div class="total-row" style="border-top: 1px solid #000;"><span>DUE AMOUNT:</span> <span>₹<?php echo number_format($due, 2); ?></span></div>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed #000; text-align: center; font-size: 11px;">
           <p>Thank you for your business!</p>
       </div>
 
-      <center>
-          <button onclick="window.print()" style="padding: 10px 20px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; font-size: 16px;">🖨 Print Invoice</button>
-          <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; margin-left: 10px; font-size: 16px;">✖ Close</button>
-      </center>
+      <div class="btn-container no-print">
+          <button onclick="window.print()" style="padding: 10px 20px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">🖨 Print Invoice</button>
+          <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; font-size: 14px;">✖ Close</button>
+      </div>
     </div>
     </body>
     </html>
