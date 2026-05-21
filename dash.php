@@ -119,7 +119,6 @@ $storeid = $current_store_id;
   .header-green { background: #1b5e20; color: white; }
 
   tr:nth-child(even) td { background: #f9f9f9; }
-  .checkmark { color: green; font-weight: bold; }
 
   .status-btn {
     background: #0288d1; color: white; border: none;
@@ -229,12 +228,18 @@ function renderTable(orders) {
           changeButton = `<button class="status-btn" id="btn-${item.id}" onclick="updateStatus(${item.id})">Change</button>`;
         }
 
+        let invoiceButton = `<button class="status-btn" style="background:#28a745; margin-left:5px;" onclick="viewInvoice(${item.id})">Invoice</button>`;
+
+        // ✅ Status 'Ready' होने पर बैकग्राउंड कलर हरा ही रहे (Persistence fix) greeen color
+        if (item.status === "Ready") {
+          td.style.backgroundColor = "#b6f0c4";
+        }
+
         // ✅ अब customer info एक ही लाइन में
         td.innerHTML = `
           ${i + 1}. ${item.id} - ₹${item.total_amount} - ${item.delivery_slot || ''} | 
           ${item.customer_name} 📞 <span style="color:#555;">${item.customer_phone || ""}</span>
-          <span class="checkmark">${item.status === "Ready" ? "✔" : ""}</span>
-          ${changeButton}
+          ${changeButton} ${invoiceButton}
         `;
       } else {
         td.innerHTML = "&nbsp;";
@@ -272,7 +277,12 @@ async function updateStatus(id) {
   if (!confirm("Change order status?")) return;
 
   const btn = document.getElementById(`btn-${id}`);
-  if (btn) btn.style.display = "none";
+  if (btn) {
+    const parentTd = btn.closest('td');
+    if (parentTd) {
+      parentTd.style.backgroundColor = "#d4edda"; // Light Green (Success Color)
+    }
+  }
 
   // ✅ UPDATED API CALL
   const res = await fetch("bbtocc.php", {
@@ -285,6 +295,11 @@ async function updateStatus(id) {
   alert(text);
 
   setTimeout(loadOrders, 800);
+}
+
+// ✅ View Invoice Function
+function viewInvoice(id) {
+  window.open("bbtocc.php?invoice=1&order_id=" + id, "_blank");
 }
 
 loadOrders();

@@ -230,6 +230,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
         $sql = "
             SELECT 
                 o.id, 
+                COALESCE(o.order_date, '') AS order_date,
                 COALESCE(c.name, '') AS customer_name,
                 COALESCE(c.mobile, '') AS customer_phone,
                 COALESCE(o.total_amount, 0) AS total_amount, 
@@ -272,6 +273,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
         $sql = "
             SELECT 
                 o.id, 
+                COALESCE(o.order_date, '') AS order_date,
                 COALESCE(c.name, '') AS customer_name,
                 COALESCE(c.mobile, '') AS customer_phone,
                 COALESCE(o.total_amount, 0) AS total_amount, 
@@ -849,6 +851,7 @@ td:nth-child(3) {  /* Store name कॉलम (तीसरा कॉलम) */
     <th>Customer Name</th>
     <th>Phone</th>
     <th>Amount Details</th>
+    <th>Create Date</th>
     <th>Delivery Date</th>
     <th>Payment Status</th>
     <th>Order Status</th>
@@ -993,6 +996,7 @@ function showPage(page) {
                 <div style="color:red;">Due: ₹${due}</div>
                 <div style="font-weight:bold; color:#1976d2;">Payable: ₹${payable.toFixed(2)}</div>
             </td>
+            <td>${order.order_date || "-"}</td>
             <td>${order.delivery_date || "-"}</td>
             <td>${order.payment_status || "Due"}</td>
             <td id="orderStatus-${oid}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>

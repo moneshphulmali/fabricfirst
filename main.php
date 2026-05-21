@@ -3,6 +3,7 @@
 // Is code ka kaam: Developer ko real-time errors dikhana taaki woh quickly debug kar sake!
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+date_default_timezone_set('Asia/Kolkata');
 
 include 'db_connect.php';
 session_start();
@@ -229,6 +230,9 @@ if (isset($_GET['action'])) {
         $sql = "SELECT 
                     o.delivery_date,
                     o.delivery_slot,
+                    o.coupon_code,
+                    o.discount_amount,
+                    o.express_amount,
                     oi.order_items_with_comments 
                 FROM orders o
                 LEFT JOIN order_item oi ON o.id = oi.order_id AND oi.is_current = 1
@@ -1329,8 +1333,8 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
   <div class="summary-row" style="font-weight:bold;"><div>Payable Amount:</div><div>₹<span id="payableAmount">0.00</span></div></div>
 
   <div style="margin-top:10px; display: flex; gap: 10px;">
-      <button class="coupon-open-btn" onclick="openCouponPanel()">🏷️ Add Coupon</button>
-      <button class="coupon-open-btn" style="background:#00aaff;" onclick="addExpressAmount()">⚡ Express Amount</button>
+      <button id="addCouponBtn" class="coupon-open-btn" onclick="openCouponPanel()">🏷️ Add Coupon</button>
+      <button id="addExpressBtn" class="coupon-open-btn" style="background:#00aaff;" onclick="addExpressAmount()">⚡ Express Amount</button>
   </div>
 </div>
 
@@ -1564,6 +1568,21 @@ function loadExistingOrderItems() {
             // ✅ 2. SET DELIVERY SLOT  
             if (data.delivery_slot) {
                 document.getElementById("timeSlot").value = data.delivery_slot;
+            }
+
+            // Restore Coupon/Express state for button disabling logic
+            if (data.coupon_code && parseFloat(data.discount_amount) > 0) {
+                // Re-calculating percentage roughly for the appliedCoupon object
+                let tempGross = parseFloat(data.total_amount || 0);
+                let p = tempGross > 0 ? (parseFloat(data.discount_amount) / tempGross) * 100 : 0;
+                appliedCoupon = { code: data.coupon_code, percent: p };
+                discountAmount = parseFloat(data.discount_amount);
+            }
+            
+            if (parseFloat(data.express_amount || 0) > 0) {
+                expressAmount = parseFloat(data.express_amount);
+                // Set a dummy object to trigger disabling of coupon button
+                appliedExpressCharge = { name: "Applied", percentage: 0 };
             }
             
             // ✅ 3. LOAD ITEMS
@@ -2179,6 +2198,30 @@ function updateSummaryUI() {
   expressAmountEl.textContent = expressAmount.toFixed(2);
   totalCountEl.textContent = totalCount;
   payableAmountEl.textContent = payableAmount.toFixed(2);
+
+  // ✅ Mutual Exclusion Logic: Add Coupon vs Express Amount
+  const couponBtn = document.getElementById("addCouponBtn");
+  const expressBtn = document.getElementById("addExpressBtn");
+
+  if (appliedCoupon) {
+      expressBtn.disabled = true;
+      expressBtn.style.opacity = "0.5";
+      expressBtn.style.cursor = "not-allowed";
+  } else {
+      expressBtn.disabled = false;
+      expressBtn.style.opacity = "1";
+      expressBtn.style.cursor = "pointer";
+  }
+
+  if (appliedExpressCharge || expressAmount > 0) {
+      couponBtn.disabled = true;
+      couponBtn.style.opacity = "0.5";
+      couponBtn.style.cursor = "not-allowed";
+  } else {
+      couponBtn.disabled = false;
+      couponBtn.style.opacity = "1";
+      couponBtn.style.cursor = "pointer";
+  }
 }
 
 // ✅ UPDATED SAVE ORDER FUNCTION

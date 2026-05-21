@@ -83,6 +83,10 @@ if(isset($_GET['action']) && $_GET['action']=='get_payments'){
     elseif($filter == "7days"){
         $dateCondition = "DATE(t.payment_date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
     }
+    elseif($filter == "single_date" && !empty($_GET['date'])){
+        $targetDate = $conn->real_escape_string($_GET['date']);
+        $dateCondition = "DATE(t.payment_date) = '$targetDate'";
+    }
     elseif($filter == "all"){
         $dateCondition = "1";
     }
@@ -205,6 +209,8 @@ h2 { color:black;padding:10px;border-radius:8px; display:; justify-content:space
 .orders-table th, .orders-table td { border:1px solid #ddd; padding:8px; text-align:center;}
 .orders-table th { background:#00aaff;color:white; }
 .hidden{ display:none;}
+#searchInput { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 280px; margin-left: 10px; }
+.date-input { padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-right: 5px; }
 </style>
 </head>
 
@@ -221,10 +227,10 @@ h2 { color:black;padding:10px;border-radius:8px; display:; justify-content:space
 
 
 <div>
-    <button class="filter-btn" onclick="loadPayments('month')">📅 This Month</button>
-    <button class="filter-btn" onclick="loadPayments('today')">📌 Today</button>
+    <label><strong>Select Date:</strong></label>
+    <input type="date" id="singleDate" class="date-input">
+    <button class="filter-btn" onclick="loadPayments('single_date')">🔍 View Info</button>
     <button class="filter-btn" onclick="loadPayments('all')">📂 All Records</button>
-	 
 </div>
 
 <br>
@@ -236,7 +242,13 @@ h2 { color:black;padding:10px;border-radius:8px; display:; justify-content:space
 <script>
 async function loadPayments(filter="month"){
     try{
-        const res = await fetch('?action=get_payments&filter='+filter);
+        let url = '?action=get_payments&filter=' + filter;
+        if(filter === 'single_date'){
+            const selectedDate = document.getElementById('singleDate').value;
+            if(!selectedDate) { alert("कृपया एक तारीख चुनें!"); return; }
+            url += '&date=' + selectedDate;
+        }
+        const res = await fetch(url);
         const json = await res.json();
         const payments = json.payments || [];
 
