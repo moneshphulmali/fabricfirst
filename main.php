@@ -419,11 +419,30 @@ if (isset($_GET['action'])) {
         $conn->begin_transaction();
 
         try {
-            // Calculate total quantity
+            // ✅ Calculate total piece count (Quantity) - FIXED Piece Count Logic
             $total_quantity = 0;
             foreach ($items as $item) {
-                // Use floatval to handle decimal quantities like 1.5 kg
-                $total_quantity += isset($item["qty"]) ? floatval($item["qty"]) : 1;
+                $p_name = isset($item["item"]) ? trim($item["item"]) : '';
+                
+                // If it's a weight-based item, calculate count from garments in comments
+                if (stripos($p_name, 'laundry by weight') !== false) {
+                    $comments_arr = $item["comments"] ?? [];
+                    if (!is_array($comments_arr)) {
+                        $comments_arr = [$comments_arr];
+                    }
+                    foreach ($comments_arr as $c) {
+                        // Format is "Product Name-Count: comments"
+                        $qtyPart = (strpos($c, ':') !== false) ? explode(':', $c)[0] : $c;
+                        $lastDash = strrpos($qtyPart, '-');
+                        if ($lastDash !== false) {
+                            $q = intval(substr($qtyPart, $lastDash + 1));
+                            if ($q > 0) $total_quantity += $q;
+                        }
+                    }
+                } else {
+                    // For regular items, qty is the piece count
+                    $total_quantity += isset($item["qty"]) ? intval($item["qty"]) : 1;
+                }
             }
 
             // ✅ STEP 1: PREPARE ORDER ITEMS ARRAY PROPERLY

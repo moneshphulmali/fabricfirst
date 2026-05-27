@@ -21,6 +21,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['current_store']['stor
         die(json_encode(["error" => "User not logged in."]));
     } else {
         header("Location: login.php");
+        header("Location: indexing.php");
         exit;
     }
 }
@@ -245,6 +246,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                 COALESCE(p.Due_Amount, 0) AS Due_Amount,
                 COALESCE(o.payable_amount, 0) AS payable_amount,
                 COALESCE(o.payment_status, 'Due') AS payment_status,
+                COALESCE(o.quantity, 0) AS quantity,
+                oi.order_items_with_comments,
                 o.storeid,
                 s.store_name
             FROM orders o
@@ -288,6 +291,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                 COALESCE(p.Due_Amount, 0) AS Due_Amount,
                 COALESCE(o.payable_amount, 0) AS payable_amount,
                 COALESCE(o.payment_status, 'Due') AS payment_status,
+                COALESCE(o.quantity, 0) AS quantity,
+                oi.order_items_with_comments,
                 o.storeid,
                 s.store_name
             FROM orders o
@@ -319,6 +324,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
         $row['payable_amount'] = isset($row['payable_amount']) ? (float)$row['payable_amount'] : 0;
         $row['Paid_Amount']  = isset($row['Paid_Amount']) ? (float)$row['Paid_Amount'] : 0;
         $row['Due_Amount']   = isset($row['Due_Amount']) ? (float)$row['Due_Amount'] : 0;
+
+        // ✅ RE-CALCULATE PIECE COUNT DYNAMICALLY FOR ALL ORDERS (OLD & NEW)
+        $total_pcs = 0;
+        $items_json = $row['order_items_with_comments'] ?? '{"items":[]}';
+        $items_data = json_decode($items_json, true);
+        $items_list = $items_data['items'] ?? [];
+
+        foreach ($items_list as $it) {
+            $p_name = $it["product_name"] ?? $it["item"] ?? '';
+            if (stripos($p_name, 'laundry by weight') !== false) {
+                $comments_arr = $it["comments"] ?? [];
+                if (!is_array($comments_arr)) $comments_arr = [$comments_arr];
+                foreach ($comments_arr as $c) {
+                    $qtyPart = (strpos($c, ':') !== false) ? explode(':', $c)[0] : $c;
+                    $lastDash = strrpos($qtyPart, '-');
+                    if ($lastDash !== false) {
+                        $q = intval(substr($qtyPart, $lastDash + 1));
+                        if ($q > 0) $total_pcs += $q;
+                    }
+                }
+            } else {
+                $total_pcs += isset($it["qty"]) ? intval($it["qty"]) : 1;
+            }
+        }
+        $row['quantity'] = $total_pcs; // Overwrite database value with calculated count
 
         // Net total calculate करें
         $netTotal = $row['payable_amount'];
@@ -1029,7 +1059,7 @@ function updatePaginationActive() {
 
 function updateStatus(order_id, newStatus) {
     if (!order_id) return;
-    if (!confirm(`क्या आप इस order को "${newStatus}" मार्क करना चाहते हैं?`)) return;
+    if (!confirm(`Do you want to mark this order as "${newStatus}"?`)) return;
 
     const formData = new URLSearchParams();
     formData.append("order_id", order_id);
@@ -1068,7 +1098,7 @@ function updateStatus(order_id, newStatus) {
                 if (editBtn) editBtn.style.display = "none";
             }
             
-            alert(`✅ Order "${newStatus}" के रूप में मार्क कर दिया गया है!`);
+            alert(`✅ Order has been marked as "${newStatus}"!`);
         } else alert("❌ Status update failed!\n" + res);
     })
     .catch(err => { 

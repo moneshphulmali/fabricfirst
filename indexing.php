@@ -20,7 +20,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
         );
     }
     session_destroy();
-    header("Location: index.php");
+    header("Location: indexing.php");
     exit;
 }
 
@@ -34,7 +34,7 @@ if (isset($_SESSION['user']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($
             $_SESSION['user']['current_store'] = $store;
             
             // Refresh page
-            header("Location: index.php");
+            header("Location: indexing.php");
             exit;
         }
     }

@@ -83,9 +83,10 @@ if(isset($_GET['action']) && $_GET['action']=='get_payments'){
     elseif($filter == "7days"){
         $dateCondition = "DATE(t.payment_date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
     }
-    elseif($filter == "single_date" && !empty($_GET['date'])){
-        $targetDate = $conn->real_escape_string($_GET['date']);
-        $dateCondition = "DATE(t.payment_date) = '$targetDate'";
+    elseif($filter == "range" && !empty($_GET['start_date']) && !empty($_GET['end_date'])){
+        $start = $conn->real_escape_string($_GET['start_date']);
+        $end = $conn->real_escape_string($_GET['end_date']);
+        $dateCondition = "DATE(t.payment_date) BETWEEN '$start' AND '$end'";
     }
     elseif($filter == "all"){
         $dateCondition = "1";
@@ -227,9 +228,12 @@ h2 { color:black;padding:10px;border-radius:8px; display:; justify-content:space
 
 
 <div>
-    <label><strong>Select Date:</strong></label>
-    <input type="date" id="singleDate" class="date-input">
-    <button class="filter-btn" onclick="loadPayments('single_date')">🔍 View Info</button>
+    <label><strong>Date Range:</strong></label>
+    <input type="date" id="startDate" class="date-input">
+    <span> to </span>
+    <input type="date" id="endDate" class="date-input">
+    <button class="filter-btn" onclick="loadPayments('range')">🔍 View Range</button>
+
     <button class="filter-btn" onclick="loadPayments('all')">📂 All Records</button>
 </div>
 
@@ -243,10 +247,11 @@ h2 { color:black;padding:10px;border-radius:8px; display:; justify-content:space
 async function loadPayments(filter="month"){
     try{
         let url = '?action=get_payments&filter=' + filter;
-        if(filter === 'single_date'){
-            const selectedDate = document.getElementById('singleDate').value;
-            if(!selectedDate) { alert("कृपया एक तारीख चुनें!"); return; }
-            url += '&date=' + selectedDate;
+        if(filter === 'range'){
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if(!start || !end) { alert("Please select both dates!"); return; }
+            url += '&start_date=' + start + '&end_date=' + end;
         }
         const res = await fetch(url);
         const json = await res.json();
@@ -290,7 +295,7 @@ payments.forEach(p=>{
 
 
         document.querySelector("#summary").innerHTML=`
-   Bill Amount: ₹${grand_total.toFixed(2)} | 
+  Payable Amount: ₹${grand_total.toFixed(2)} | 
     💰 Cash: ₹${total_cash.toFixed(2)} |
     💳 Card: ₹${total_card.toFixed(2)} |
     📱 UPI: ₹${total_upi.toFixed(2)} |
@@ -334,7 +339,6 @@ payments.forEach(p=>{
                         <thead>
                             <tr>
                                 <th>Order ID</th>
-                                <th>Customer ID</th>
                                 <th>Payment Mode</th>
                                 <th>Payable Amount (₹)</th>
                                 <th>Paid (₹)</th>
@@ -345,7 +349,6 @@ payments.forEach(p=>{
                             ${grouped[date].map(p=>`
                                 <tr>
                                     <td>${p.order_id}</td>
-                                    <td>${p.customer_id}</td>
                                     <td>${p.payment_mode}</td>
                                     <td>${p.payable_amount}</td>
                                     <td>${p.Paid_Amount}</td>

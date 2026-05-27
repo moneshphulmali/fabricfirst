@@ -168,7 +168,9 @@ async function loadOrders() {
     return;
   }
   
-  allOrders = await res.json();
+  const data = await res.json();
+  // Filter out delivered orders so they don't show on the dashboard
+  allOrders = data.filter(order => (order.status || "").toLowerCase() !== 'delivered');
   renderTable(allOrders);
 }
 
@@ -237,7 +239,7 @@ function renderTable(orders) {
 
         // ✅ अब customer info एक ही लाइन में
         td.innerHTML = `
-          ${i + 1}. ${item.id} - ₹${item.total_amount} - ${item.delivery_slot || ''} | 
+          ${i + 1}. ${item.id} [${item.quantity || 0} Pcs] - ₹${item.total_amount} - ${item.delivery_slot || ''} | 
           ${item.customer_name} 📞 <span style="color:#555;">${item.customer_phone || ""}</span>
           ${changeButton} ${invoiceButton}
         `;
