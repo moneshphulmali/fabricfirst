@@ -2731,3 +2731,102 @@ Array
 )
 
 ---
+Array
+(
+    [time] => 2026-05-27 15:13:56
+    [mobile] => 9348352684
+    [message] => Hello Kelash, Your order #59 has been created. Amount: Rs.782. Delivery: 30/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 15:30:25
+    [mobile] => 9834928489
+    [message] => Hello kajal, Your order #60 has been created. Amount: Rs.496. Delivery: 29/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 15:36:02
+    [mobile] => 8734526748
+    [message] => Hello sham, Your order #61 has been created. Amount: Rs.337. Delivery: 27/05/2026 (Afternoon (12-4)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 15:45:23
+    [mobile] => 8734258452
+    [message] => Hello khan, Your order #62 has been created. Amount: Rs.852. Delivery: 29/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 19:30:38
+    [mobile] => 8934758937
+    [message] => Hello jagan, Your order #63 has been created. Amount: Rs.420. Delivery: 30/05/2026 (Afternoon (12-4)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 19:53:19
+    [mobile] => 9368428963
+    [message] => Hello nandu, Your order #64 has been created. Amount: Rs.317. Delivery: 27/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-27 19:56:28
+    [mobile] => 9834652896
+    [message] => Hello monu, Your order #65 has been created. Amount: Rs.477.1. Delivery: 27/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-28 11:01:55
+    [mobile] => 9385638659
+    [message] => Hello komal dash, Your order #66 has been created. Amount: Rs.1685. Delivery: 31/05/2026 (Afternoon (12-4)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-05-28 11:04:54
+    [mobile] => 9834758368
+    [message] => Hello javed, Your order #67 has been created. Amount: Rs.255. Delivery: 30/05/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---

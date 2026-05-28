@@ -419,31 +419,10 @@ if (isset($_GET['action'])) {
         $conn->begin_transaction();
 
         try {
-            // ✅ Calculate total piece count (Quantity) - FIXED Piece Count Logic
-            $total_quantity = 0;
-            foreach ($items as $item) {
-                $p_name = isset($item["item"]) ? trim($item["item"]) : '';
-                
-                // If it's a weight-based item, calculate count from garments in comments
-                if (stripos($p_name, 'laundry by weight') !== false) {
-                    $comments_arr = $item["comments"] ?? [];
-                    if (!is_array($comments_arr)) {
-                        $comments_arr = [$comments_arr];
-                    }
-                    foreach ($comments_arr as $c) {
-                        // Format is "Product Name-Count: comments"
-                        $qtyPart = (strpos($c, ':') !== false) ? explode(':', $c)[0] : $c;
-                        $lastDash = strrpos($qtyPart, '-');
-                        if ($lastDash !== false) {
-                            $q = intval(substr($qtyPart, $lastDash + 1));
-                            if ($q > 0) $total_quantity += $q;
-                        }
-                    }
-                } else {
-                    // For regular items, qty is the piece count
-                    $total_quantity += isset($item["qty"]) ? intval($item["qty"]) : 1;
-                }
-            }
+            // ✅ Use quantity sent from UI (totalCount), or calculate as fallback
+            $total_quantity = isset($data["totalQuantity"]) ? intval($data["totalQuantity"]) : 0;
+            
+            // If for some reason UI didn't send it, you can keep the previous calculation logic here as a fallback
 
             // ✅ STEP 1: PREPARE ORDER ITEMS ARRAY PROPERLY
             $order_items_array = [
@@ -2324,7 +2303,8 @@ function saveOrder() {
             unit: row.dataset.unit || 'Pcs' // Send unit to backend
         });
     });
-
+//  const means Constant javascript me variable banane ka karika he jise change nahi kiya ja sakata he 
+// payload is a Box 
     const payload = {
         name: name,
         phone: phone,
@@ -2336,7 +2316,8 @@ function saveOrder() {
         payableAmount: parseFloat(payableAmount.toFixed(2)),
         coupon: appliedCoupon ? appliedCoupon.code : "",
         expressAmount: parseFloat(expressAmount.toFixed(2)), // Add expressAmount here
-        items: items
+        items: items,
+        totalQuantity: totalCount // ✅ Sending the UI totalCount to the server (Humne UI ka totalCount payload mein dal diya)
     };
 
     // ✅ ADD EDIT ORDER ID IF EDITING

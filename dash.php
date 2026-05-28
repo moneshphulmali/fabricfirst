@@ -201,13 +201,17 @@ function renderTable(orders) {
   dates.forEach(date => {
     const all = grouped[date];
     const total = all.length;
+    const totalPcs = all.reduce((sum, o) => sum + (parseInt(o.quantity) || 0), 0); // ✅ Total Pcs sum
     const proc = all.filter(o => o.status === "Processing").length;
-    const ready = all.filter(o => o.status === "Ready").length;
+
+    const readyOrders = all.filter(o => o.status === "Ready");
+    const ready = readyOrders.length;
+    const readyPcs = readyOrders.reduce((sum, o) => sum + (parseInt(o.quantity) || 0), 0);
 
     dateHeader.innerHTML += `<th class='header-blue'>${new Date(date).toDateString()}</th>`;
-    totalHeader.innerHTML += `<th class='header-purple'>${total} Orders</th>`;
+    totalHeader.innerHTML += `<th class='header-purple'>${total} Orders (${totalPcs} Pcs)</th>`; // ✅ Total Pcs & Orders
     processingHeader.innerHTML += `<th class='header-black'>${proc}</th>`;
-    readyHeader.innerHTML += `<th class='header-green'>${ready}</th>`;
+    readyHeader.innerHTML += `<th class='header-green'>${ready} (${readyPcs} Pcs)</th>`;  // ✅  Total Ready with Pcs 
   });
 
   const maxRows = Math.max(...Object.values(grouped).map(a => a.length));
