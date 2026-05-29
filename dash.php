@@ -136,7 +136,7 @@ $storeid = $current_store_id;
   <label><strong>Select Date:</strong></label>
   <input type="date" id="filterDate" onchange="filterByDate()">
   
-  <label><strong>Search:</strong></label>
+  <label><strong>Searchhh:</strong></label>
   <input type="text" id="searchInput" onkeyup="searchOrders()" placeholder="Order ID, Name, or Phone">
 </div>
 
