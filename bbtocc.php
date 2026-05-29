@@ -863,9 +863,39 @@ td:nth-child(3) {  /* Store name कॉलम (तीसरा कॉलम) */
 <?php include 'menu.php'; ?>  
 
 <center>
-  <h2>🧾 Orders </h2>
-  <input type="text" id="searchBox" placeholder="🔍 Search by Order ID, Name or Phone">
-  <button id="searchBtn">Search</button>
+  <div style="position: relative; width: 95%; min-height: 100px; padding-top: 10px;">
+    <!-- Center Section: Title and Search -->
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <h2 style="margin-bottom: 15px;">🧾 Orders </h2>
+      <div style="display: flex; align-items: center; gap: 5px;">
+        <input type="text" id="searchBox" placeholder="🔍 Search by Order ID, Name or Phone" style="margin: 0;">
+        <button id="searchBtn">Search</button>
+      </div>
+    </div>
+
+    <!-- Right Corner Section: Filters stacked vertically -->
+    <div style="position: absolute; right: 0; top: 0; text-align: right; display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
+      <div>
+        <strong style="font-size: 14px;">Payments:</strong>
+        <select id="paymentFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 160px;">
+            <option value="">All Payments</option>
+            <option value="Paid">Paid</option>
+            <option value="Due">Due</option>
+            <option value="Partial">Partial</option>
+        </select>
+      </div>
+      <div>
+        <strong style="font-size: 14px;">Status:</strong>
+        <select id="statusFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 160px;">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Ready">Ready</option>
+            <option value="Delivered">Delivered</option>
+        </select>
+      </div>
+    </div>
+  </div>
 </center>
 
 <div id="error" class="error" style="color:red; text-align:center;"></div>
@@ -920,19 +950,30 @@ fetch("bbtocc.php?action=get_orders")
     console.error(err);
 });
 
-document.getElementById("searchBtn").addEventListener("click", () => {
+function applyFilters() {
   const q = document.getElementById("searchBox").value.trim().toLowerCase();
-  if (q === "") filteredData = ordersData;
-  else {
-    filteredData = ordersData.filter(o =>
+  const status = document.getElementById("statusFilter").value.toLowerCase();
+  const payment = document.getElementById("paymentFilter").value.toLowerCase();
+  
+  filteredData = ordersData.filter(o => {
+    const matchesSearch = q === "" || 
       o.id.toString().includes(q) ||
       (o.customer_name && o.customer_name.toLowerCase().includes(q)) ||
-      (o.customer_phone && o.customer_phone.includes(q))
-    );
-  }
+      (o.customer_phone && o.customer_phone.includes(q));
+      
+    const matchesStatus = status === "" || (o.status || "").toLowerCase() === status;
+    const matchesPayment = payment === "" || (o.payment_status || "").toLowerCase() === payment;
+    
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
+  
   createPagination();
   showPage(1);
-});
+}
+
+document.getElementById("searchBtn").addEventListener("click", applyFilters);
+document.getElementById("statusFilter").addEventListener("change", applyFilters);
+document.getElementById("paymentFilter").addEventListener("change", applyFilters);
 
 function showPage(page) {
     currentPage = page;

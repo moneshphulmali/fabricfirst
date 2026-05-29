@@ -1834,7 +1834,18 @@ function showServices(name, type) {
   type = unescape(type);
   const containerId = `${name.replace(/\s+/g, '_')}_services`;
   const container = document.getElementById(containerId);
+
+  // अगर उसी टाइप पर क्लिक किया जो पहले से खुला है, तो उसे छिपा दें
+  if (container.dataset.currentType === type && !container.classList.contains("hidden")) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  // नया कंटेंट लोड करने के लिए तैयारी
   container.innerHTML = "";
+  container.dataset.currentType = type;
+  container.classList.remove("hidden"); // सुनिश्चित करें कि कंटेनर दिखाई दे रहा है
+
   const services = allProducts[name] && allProducts[name][type] ? allProducts[name][type] : [];
   
   services.forEach(s => {
@@ -1869,8 +1880,6 @@ function showServices(name, type) {
     serviceDiv.appendChild(serviceDetails);
     container.appendChild(serviceDiv);
   });
-  
-  container.classList.toggle("hidden");
 }
 
 // Open comments panel

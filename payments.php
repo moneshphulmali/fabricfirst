@@ -331,7 +331,7 @@ payments.forEach(p=>{
             dateDiv.innerHTML=`
                 <div class="date-row" onclick="toggleOrders(this)">
                     <span class="date-text">${date}</span>
-                    <span> Paid: ₹${paid.toFixed(2)} | Due: ₹${due.toFixed(2)} <span class="arrow">▶</span></span>
+                    <span> Paid: ₹${Math.round(paid)} | Due: ₹${Math.round(due)} <span class="arrow">▶</span></span>
                 </div>
 
                 <div class="orders hidden">
@@ -350,9 +350,9 @@ payments.forEach(p=>{
                                 <tr>
                                     <td>${p.order_id}</td>
                                     <td>${p.payment_mode}</td>
-                                    <td>${p.payable_amount}</td>
-                                    <td>${p.Paid_Amount}</td>
-                                    <td>${p.Due_Amount}</td>
+                                    <td>${Math.round(p.payable_amount)}</td>
+                                    <td>${Math.round(p.Paid_Amount)}</td>
+                                    <td>${Math.round(p.Due_Amount)}</td>
                                 </tr>`).join("")}
                         </tbody>
                     </table>
