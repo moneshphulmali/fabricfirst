@@ -863,30 +863,30 @@ td:nth-child(3) {  /* Store name कॉलम (तीसरा कॉलम) */
 <?php include 'menu.php'; ?>  
 
 <center>
-  <div style="position: relative; width: 95%; min-height: 100px; padding-top: 10px;">
-    <!-- Center Section: Title and Search -->
-    <div style="display: flex; flex-direction: column; align-items: center;">
-      <h2 style="margin-bottom: 15px;">🧾 Orders </h2>
+  <div style="width: 95%; padding-top: 10px;">
+    <h2 style="margin-bottom: 15px;">🧾 Orders </h2>
+    
+    <!-- Horizontal Filters Container -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+      
       <div style="display: flex; align-items: center; gap: 5px;">
         <input type="text" id="searchBox" placeholder="🔍 Search by Order ID, Name or Phone" style="margin: 0;">
         <button id="searchBtn">Search</button>
       </div>
-    </div>
 
-    <!-- Right Corner Section: Filters stacked vertically -->
-    <div style="position: absolute; right: 0; top: 0; text-align: right; display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
-      <div>
+      <div style="display: flex; align-items: center; gap: 5px;">
         <strong style="font-size: 14px;">Payments:</strong>
-        <select id="paymentFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 160px;">
+        <select id="paymentFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 140px;">
             <option value="">All Payments</option>
             <option value="Paid">Paid</option>
             <option value="Due">Due</option>
             <option value="Partial">Partial</option>
         </select>
       </div>
-      <div>
+
+      <div style="display: flex; align-items: center; gap: 5px;">
         <strong style="font-size: 14px;">Status:</strong>
-        <select id="statusFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 160px;">
+        <select id="statusFilter" style="padding: 7px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; width: 140px;">
             <option value="">All Status</option>
             <option value="Pending">Pending</option>
             <option value="Processing">Processing</option>

@@ -221,7 +221,7 @@ th, td { border-bottom:1px solid #eee; padding:8px; text-align:center;}
 <div class="main-content"> 
 <?php include 'menu.php'; ?> 
 
-<h2 style="text-align:center; color: black"> 📦 Suppliesss </h2>
+<h2 style="text-align:center; color: black"> 📦 Supplies </h2>
 
 <div class="container">
 
