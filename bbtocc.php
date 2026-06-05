@@ -225,6 +225,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_label_data') {
 if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
     header("Content-Type: application/json; charset=utf-8");
 
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100; // Default limit for performance
+    $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0; // Default offset
+
     // 
     if ($is_admin) {
        
@@ -262,6 +265,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                AND role_id IN (1, 2)  
             )
             ORDER BY o.id DESC
+            LIMIT ? OFFSET ?
         ";
 
         $stmt = $conn->prepare($sql);
@@ -269,8 +273,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
             echo json_encode(["error" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        
-        $stmt->bind_param("i", $user_id);
+        $stmt->bind_param("iii", $user_id, $limit, $offset);
     } else {
        
         $sql = "
@@ -302,6 +305,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
             LEFT JOIN stores s ON o.storeid = s.storeid
             WHERE o.storeid = ?  
             ORDER BY o.id DESC
+            LIMIT ? OFFSET ?
         ";
 
         $stmt = $conn->prepare($sql);
@@ -309,8 +313,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
             echo json_encode(["error" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        
-        $stmt->bind_param("i", $current_store_id);
+        $stmt->bind_param("iii", $current_store_id, $limit, $offset);
     }
     
     $stmt->execute();

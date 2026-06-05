@@ -151,27 +151,69 @@ $storeid = $current_store_id;
     <tbody id="ordersBody"></tbody>
   </table>
 </div>
+<div style="text-align: center; margin: 20px;">
+  <button id="loadMoreBtn" class="status-btn" style="padding: 10px 20px; font-size: 14px;" onclick="loadMore()">Load More Orders</button>
+</div>
 
 <script>
 let allOrders = []; // सभी orders को स्टोर करेगा
+let currentOffset = 0;
+const limit = 50;
 
-async function loadOrders() {
-  // ✅ OPTION 1: Use bbtocc.php API
-  const res = await fetch("bbtocc.php?action=get_orders");
-  
-  // ✅ OPTION 2: Use existing getget_orders.php (if it exists)
-  // const res = await fetch("getget_orders.php?storeid=<?= $storeid ?>");
+async function loadOrders(append = false) {
+  const loadBtn = document.getElementById("loadMoreBtn");
+  if(loadBtn) {
+    loadBtn.disabled = true;
+    loadBtn.innerText = "Loading...";
+  }
+
+  // Fetching orders with limit and offset for better performance
+  const res = await fetch(`bbtocc.php?action=get_orders&limit=${limit}&offset=${currentOffset}`);
   
   if (!res.ok) {
     alert("Error loading orders. Please check console.");
     console.error("API Error:", res.status);
+    if(loadBtn) {
+      loadBtn.disabled = false;
+      loadBtn.innerText = "Load More Orders";
+    }
     return;
   }
   
   const data = await res.json();
+
+  if (data.length === 0) {
+    if(loadBtn) loadBtn.style.display = 'none';
+    if(!append) renderTable([]);
+    return;
+  }
+
   // Filter out delivered orders so they don't show on the dashboard
-  allOrders = data.filter(order => (order.status || "").toLowerCase() !== 'delivered');
+  const filtered = data.filter(order => (order.status || "").toLowerCase() !== 'delivered');
+  
+  if (append) {
+    allOrders = [...allOrders, ...filtered];
+  } else {
+    allOrders = filtered;
+  }
+
   renderTable(allOrders);
+
+  if(loadBtn) {
+    loadBtn.disabled = false;
+    loadBtn.innerText = "Load More Orders";
+    // If we fetched fewer records than the limit, there are no more records to load
+    if (data.length < limit) {
+      loadBtn.style.display = 'none';
+    } else {
+      loadBtn.style.display = 'inline-block';
+    }
+  }
+}
+
+function loadMore() {
+  currentOffset += limit;
+  loadOrders(true);
 }
 
 function groupByDate(orders) {
