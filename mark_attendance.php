@@ -1,9 +1,28 @@
 <?php
+include 'db_connect.php';
 $token = $_GET['token'] ?? '';
 $emp_id = $_GET['emp_id'] ?? '';
+error_log("mark_attendance.php is being executed. URL: " . $_SERVER['REQUEST_URI']);
+echo "<!-- mark_attendance.php is being executed -->"; // Visible in source code
 
 if (empty($token)) {
     die("Invalid QR Access. Please scan the QR code from the office kiosk.");
+}
+
+// Aaj ki attendance status check karein
+$check_in_done = false;
+$check_out_done = false;
+
+if (!empty($emp_id)) {
+    $stmt = $conn->prepare("SELECT check_in_time, check_out_time FROM attendance WHERE employee_id = ? AND date = CURDATE()");
+    $stmt->bind_param("s", $emp_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $check_in_done = !empty($row['check_in_time']);
+        $check_out_done = !empty($row['check_out_time']);
+    }
+    $stmt->close();
 }
 ?>
 <!DOCTYPE html>
@@ -46,11 +65,13 @@ if (empty($token)) {
 
             <div class="grid grid-cols-2 gap-4 pt-4">
                 <button type="button" id="btnIn" onclick="submitAttendance('check_in')" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                    <?= $check_in_done ? 'disabled' : '' ?>
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                     Check In
                 </button>
                 <button type="button" id="btnOut" onclick="submitAttendance('check_out')" 
-                    class="bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-200 transition-all active:scale-95">
+                    <?= (!$check_in_done || $check_out_done) ? 'disabled' : '' ?>
+                    class="bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                     Check Out
                 </button>
             </div>
@@ -72,6 +93,10 @@ if (empty($token)) {
             const btnIn = document.getElementById('btnIn');
             const btnOut = document.getElementById('btnOut');
             
+            // Current buttons state store karein
+            const wasInDisabled = btnIn.disabled;
+            const wasOutDisabled = btnOut.disabled;
+            
             const fp = await fpPromise;
             const result = await fp.get();
             const deviceId = result.visitorId;
@@ -91,12 +116,24 @@ if (empty($token)) {
                     msgDiv.classList.add(data.success ? 'bg-emerald-100' : 'bg-red-100');
                     msgDiv.classList.add(data.success ? 'text-emerald-800' : 'text-red-800');
                     msgDiv.innerText = (data.success ? "✅ " : "❌ ") + data.message;
-                    if(data.success) form.pin.value = "";
+                    if(data.success) {
+                        form.pin.value = "";
+                        // Success par buttons ko update karein
+                        if (type === 'check_in') {
+                            btnIn.disabled = true;
+                            btnOut.disabled = false;
+                        } else {
+                            btnOut.disabled = true;
+                        }
+                    }
                 })
                 .catch(err => alert("Connection error! Make sure you are connected to internet."))
                 .finally(() => {
-                    btnIn.disabled = false;
-                    btnOut.disabled = false;
+                    // Error aane par original state wapas layein, success par disabled hi rehne dein
+                    if (msgDiv.innerText.includes("❌")) {
+                        btnIn.disabled = wasInDisabled;
+                        btnOut.disabled = wasOutDisabled;
+                    }
                     msgDiv.classList.remove('hidden');
                 });
         }

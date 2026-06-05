@@ -121,12 +121,12 @@ if (isset($_GET['action'])) {
 
             // Attendance Rules / Slot Evaluation
             $currentTimeStr = date('H:i:s');
-            if ($currentTimeStr <= '09:10:00') {
-                $status = 'Present'; // on time ->  9:10 AM ya usse pehle check-in karta hai, toh uska status Present mark hota hai
-            } elseif ($currentTimeStr > '09:10:00' && $currentTimeStr <= '09:30:00') {
-                $status = 'Late'; // Late -> 9:11 se lekar 9:30 tak ka samay late category mein aata hai.
+            if ($currentTimeStr <= '10:30:00') {
+                $status = 'Present'; // on time ->  10:30 AM ya usse pehle check-in karta hai, toh uska status Present mark hota hai
+            } elseif ($currentTimeStr > '10:31:00' && $currentTimeStr <= '11:00:00') {
+                $status = 'Late'; // Late -> 10:31 se lekar 11:00 tak ka samay late category mein aata hai.
             } else {
-                $status = 'Half-Day'; // Half-Day -> 9:30 AM ke baad check-in karta hai, toh uska status automatic Half-Day ho jata hai.
+                $status = 'Half-Day'; // Half-Day -> 11:01 AM ke baad check-in karta hai, toh uska status automatic Half-Day ho jata hai.
             }
 
             $stmt = $pdo->prepare("INSERT INTO attendance (employee_id, storeid, status, check_in_time, date, device_id, token_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -165,6 +165,18 @@ if (isset($_GET['action'])) {
         }
     }
 }
+
+// --- Automatic Check-Out Correction Logic ---
+// Yadi koi employee check-out bhul gaya hai, toh automatic 8:30 PM (20:30:00) set karein
+try {
+    $autoTime = "20:30:00";
+    $pdo->prepare("
+        UPDATE attendance 
+        SET check_out_time = CONCAT(date, ' ', ?) 
+        WHERE check_out_time IS NULL 
+        AND (date < CURDATE() OR (date = CURDATE() AND TIME(NOW()) > ?))
+    ")->execute([$autoTime, $autoTime]);
+} catch (Exception $e) { /* Error handling if required */ }
 
 $current_store_id = $_SESSION['user']['current_store']['storeid'];
 $is_admin = $_SESSION['user']['is_admin'] ?? false;
@@ -241,11 +253,12 @@ $isEmployeeView = isset($_GET['token']);
         <!-- ADMIN KIOSK VIEW -->
         <div id="view-admin" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
+            <?php if (!$is_admin): ?>
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center justify-center text-center">
                 <h2 class="text-xl font-bold text-slate-900 mb-2">Scan this QR to mark attendance</h2>
                 
                 <div class="bg-slate-100 p-4 rounded-xl border border-dashed border-slate-300 relative">
-                    <div id="qrcode" class="p-2 bg-white rounded shadow-sm"></div>
+                    <div id="qrcode" class="p-2 bg-white rounded shadow-sm blur-md transition-all duration-500"></div>
                     <div id="qr-overlay" class="absolute inset-0 bg-slate-900/10 backdrop-blur-xs flex items-center justify-center rounded-xl hidden">
                         <span class="bg-white text-xs px-3 py-1.5 rounded-full font-bold shadow text-indigo-600 animate-pulse">Refreshing...</span>
                     </div>
@@ -256,8 +269,9 @@ $isEmployeeView = isset($_GET['token']);
                 </div>
                 <p class="text-xs text-slate-400 mt-2">Rotates automatically every 60s to isolate proxy submissions.</p>
             </div>
+            <?php endif; ?>
 
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div class="<?php echo $is_admin ? 'lg:col-span-3' : 'lg:col-span-2'; ?> bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
                 <!-- Registered Employees List Section -->
                 <div>
@@ -276,7 +290,9 @@ $isEmployeeView = isset($_GET['token']);
                                     <th class="py-2 px-4">Name</th>
                                     <th class="py-2 px-4">Check In</th>
                                     <th class="py-2 px-4">Check Out</th>
+                                    <?php if (!$is_admin): ?>
                                     <th class="py-2 px-4 text-center">Action</th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -289,11 +305,13 @@ $isEmployeeView = isset($_GET['token']);
                                         <td class="py-3 px-4 font-semibold text-slate-900"><?= htmlspecialchars($emp['name']) ?></td>
                                         <td class="py-3 px-4 text-slate-600 font-medium"><?= $emp['check_in_time'] ? date('h:i A', strtotime($emp['check_in_time'])) : '<span class="text-slate-300">-</span>' ?></td>
                                         <td class="py-3 px-4 text-slate-600 font-medium"><?= $emp['check_out_time'] ? date('h:i A', strtotime($emp['check_out_time'])) : '<span class="text-slate-300">-</span>' ?></td>
+                                        <?php if (!$is_admin): ?>
                                         <td class="py-3 px-4 text-center">
                                             <button onclick="fetchNextQRToken('<?= $emp['employee_id'] ?>'); window.scrollTo({top: 0, behavior: 'smooth'});" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 border border-indigo-100">
                                                 Generate QR
                                             </button>
                                         </td>
+                                        <?php endif; ?>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -367,18 +385,27 @@ $isEmployeeView = isset($_GET['token']);
         let countdownTimer = null;
         const qrRefreshCycleSeconds = 60;
         let activeEmpId = '';
+        <?php if (!$is_admin): ?>
 
         // --- Admin Kiosk System Logic ---
         const qrContainer = document.getElementById("qrcode");
         const qrcodeInstance = new QRCode(qrContainer, { width: 220, height: 220, correctLevel: QRCode.CorrectLevel.H });
 
         function fetchNextQRToken(empId = activeEmpId) {
+            if (!empId) return;
             activeEmpId = empId;
+
+            // Start rotation only after first manual click
+            if (!qrInterval) {
+                qrInterval = setInterval(() => fetchNextQRToken(activeEmpId), qrRefreshCycleSeconds * 1000);
+            }
+
             document.getElementById('qr-overlay').classList.remove('hidden');
             fetch('?action=generate_token&employee_id=' + empId)
                 .then(res => res.json())
                 .then(data => {
                     if(data.success) {
+                        qrContainer.classList.remove('blur-md'); // Remove blur on success
                         qrcodeInstance.clear();
                         // Generate full URL for the employee to open
                         const scanUrl = window.location.origin + "/fabricfirst/mark_attendance.php?token=" + data.token + "&emp_id=" + data.emp_id;
@@ -411,12 +438,11 @@ $isEmployeeView = isset($_GET['token']);
         }
 
         function startAdminQRRotation() {
-            fetchNextQRToken();
-            clearInterval(qrInterval);
-            qrInterval = setInterval(fetchNextQRToken, qrRefreshCycleSeconds * 1000);
+            // Function kept for legacy but auto-start disabled
         }
 
-        window.onload = startAdminQRRotation;
+        // Auto-generation on load disabled as per requirement
+        <?php endif; ?>
 
         // --- Employees Summary Date Filter Logic ---
         function applySummaryDateFilter() {
