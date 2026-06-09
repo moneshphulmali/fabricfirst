@@ -26,6 +26,8 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
+    // MySQL session ka timezone set karein taaki NOW() aur CURDATE() sahi chalein
+    $pdo->exec("SET time_zone = '+05:30'");
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
@@ -47,7 +49,7 @@ if (isset($_GET['action'])) {
 
             $token = bin2hex(random_bytes(16));
             $createdAt = date('Y-m-d H:i:s');
-            $expiresAt = date('Y-m-d H:i:s', time() + 60); // 60 Seconds Validity
+            $expiresAt = date('Y-m-d H:i:s', time() + 300); // 60 Seconds Validity
 
             // Cleanup: Delete expired tokens that were never used to keep the table clean
             $pdo->prepare("DELETE FROM qr_tokens WHERE expires_at < NOW() AND status = 'generated' AND storeid = ?")->execute([$storeid]);
@@ -167,13 +169,13 @@ if (isset($_GET['action'])) {
 }
 
 // --- Automatic Check-Out Correction Logic ---
-// Yadi koi employee check-out bhul gaya hai, toh automatic 8:30 PM (20:30:00) set karein
+// Yadi koi employee check-out bhul gaya hai, toh us din ke liye 8:30 PM (20:30:00) set karein
 try {
     $autoTime = "20:30:00";
     $pdo->prepare("
         UPDATE attendance 
         SET check_out_time = CONCAT(date, ' ', ?) 
-        WHERE check_out_time IS NULL 
+        WHERE (check_out_time IS NULL OR check_out_time = '')
         AND (date < CURDATE() OR (date = CURDATE() AND TIME(NOW()) > ?))
     ")->execute([$autoTime, $autoTime]);
 } catch (Exception $e) { /* Error handling if required */ }
@@ -215,9 +217,6 @@ foreach ($period as $dt) {
     // Optionally, you can exclude weekends or holidays here if needed
     // For now, counting all days in the range
     $daysElapsed++;
-}
-if ($daysElapsed > 0) {
-    $daysElapsed--; // Adjust for the +1 day modification
 }
 
 // Fetch Summary Data

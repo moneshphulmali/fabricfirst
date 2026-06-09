@@ -151,14 +151,12 @@ $storeid = $current_store_id;
     <tbody id="ordersBody"></tbody>
   </table>
 </div>
-<div style="text-align: center; margin: 20px;">
-  <button id="loadMoreBtn" class="status-btn" style="padding: 10px 20px; font-size: 14px;" onclick="loadMore()">Load More Orders</button>
-</div>
 
 <script>
 let allOrders = []; // सभी orders को स्टोर करेगा
 let currentOffset = 0;
-const limit = 50;
+const limit = 10; // 10 Active Days at a time
+let hasMoreData = true;
 
 async function loadOrders(append = false) {
   const loadBtn = document.getElementById("loadMoreBtn");
@@ -168,7 +166,7 @@ async function loadOrders(append = false) {
   }
 
   // Fetching orders with limit and offset for better performance
-  const res = await fetch(`bbtocc.php?action=get_orders&limit=${limit}&offset=${currentOffset}`);
+  const res = await fetch(`bbtocc.php?action=get_orders&limit=${limit}&offset=${currentOffset}&mode=active_days`);
   
   if (!res.ok) {
     alert("Error loading orders. Please check console.");
@@ -198,17 +196,11 @@ async function loadOrders(append = false) {
   }
 
   renderTable(allOrders);
-
-  if(loadBtn) {
-    loadBtn.disabled = false;
-    loadBtn.innerText = "Load More Orders";
-    // If we fetched fewer records than the limit, there are no more records to load
-    if (data.length < limit) {
-      loadBtn.style.display = 'none';
-    } else {
-      loadBtn.style.display = 'inline-block';
-    }
-  }
+  
+  // ✅ Check logic: Agar unique dates ki ginti limit (10) ke barabar hai, 
+  // matlab piche aur bhi purana data ho sakta hai.
+  const uniqueDatesInResponse = [...new Set(data.map(o => o.delivery_date))].length;
+  hasMoreData = (uniqueDatesInResponse >= limit);
 }
 
 function loadMore() {
@@ -256,6 +248,13 @@ function renderTable(orders) {
     readyHeader.innerHTML += `<th class='header-green'>${ready} (${readyPcs} Pcs)</th>`;  // ✅  Total Ready with Pcs 
   });
 
+  if (hasMoreData) {
+    dateHeader.innerHTML += `<th class="header-blue">Next Batch</th>`;
+    totalHeader.innerHTML += `<th class="header-purple">...</th>`;
+    processingHeader.innerHTML += `<th class="header-black">...</th>`;
+    readyHeader.innerHTML += `<th class="header-green">...</th>`;
+  }
+
   const maxRows = Math.max(...Object.values(grouped).map(a => a.length));
   ordersBody.innerHTML = "";
 
@@ -294,6 +293,17 @@ function renderTable(orders) {
       }
       tr.appendChild(td);
     });
+
+    if (hasMoreData) {
+      const loadTd = document.createElement("td");
+      if (i === Math.floor(maxRows / 2)) {
+        loadTd.innerHTML = `<button id="loadMoreBtn" class="status-btn" onclick="loadMore()" style="background:#6a1b9a;">Load More Orders</button>`;
+      } else {
+        loadTd.innerHTML = "";
+      }
+      tr.appendChild(loadTd);
+    }
+
     ordersBody.appendChild(tr);
   }
 }

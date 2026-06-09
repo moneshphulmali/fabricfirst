@@ -227,6 +227,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
 
     $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100; // Default limit for performance
     $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0; // Default offset
+    $mode = $_GET['mode'] ?? '';
 
     // 
     if ($is_admin) {
@@ -258,22 +259,36 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
             LEFT JOIN payments p ON o.id = p.order_id
             LEFT JOIN order_item oi ON o.order_item_id = oi.id
             LEFT JOIN stores s ON o.storeid = s.storeid
-            WHERE o.storeid IN ( 
+            WHERE ";
+
+        if ($mode === 'active_days') {
+            $sql .= "o.delivery_date IN (
+                SELECT delivery_date FROM (
+                    SELECT DISTINCT delivery_date 
+                    FROM orders 
+                    WHERE storeid IN (SELECT storeid FROM store_user_roles WHERE user_id = ? AND role_id IN (1, 2))
+                    AND (status != 'Delivered' OR status IS NULL)
+                    ORDER BY delivery_date DESC 
+                    LIMIT ? OFFSET ?
+                ) AS tmp
+            ) AND o.storeid IN (SELECT storeid FROM store_user_roles WHERE user_id = ? AND role_id IN (1, 2))";
+            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC");
+            $stmt->bind_param("iiii", $user_id, $limit, $offset, $user_id);
+        } else {
+            $sql .= "o.storeid IN ( 
                 SELECT storeid 
                 FROM store_user_roles
                 WHERE user_id = ? 
-               AND role_id IN (1, 2)  
-            )
-            ORDER BY o.id DESC
-            LIMIT ? OFFSET ?
-        ";
+                AND role_id IN (1, 2)  
+            ) ORDER BY o.id DESC LIMIT ? OFFSET ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iii", $user_id, $limit, $offset);
+        }
 
-        $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["error" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        $stmt->bind_param("iii", $user_id, $limit, $offset);
     } else {
        
         $sql = "
@@ -303,17 +318,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
             LEFT JOIN payments p ON o.id = p.order_id
             LEFT JOIN order_item oi ON o.order_item_id = oi.id
             LEFT JOIN stores s ON o.storeid = s.storeid
-            WHERE o.storeid = ?  
-            ORDER BY o.id DESC
-            LIMIT ? OFFSET ?
-        ";
+            WHERE ";
 
-        $stmt = $conn->prepare($sql);
+        if ($mode === 'active_days') {
+            $sql .= "o.delivery_date IN (
+                SELECT delivery_date FROM (
+                    SELECT DISTINCT delivery_date 
+                    FROM orders 
+                    WHERE storeid = ? 
+                    AND (status != 'Delivered' OR status IS NULL)
+                    ORDER BY delivery_date DESC 
+                    LIMIT ? OFFSET ?
+                ) AS tmp
+            ) AND o.storeid = ?";
+            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC");
+            $stmt->bind_param("iiii", $current_store_id, $limit, $offset, $current_store_id);
+        } else {
+            $sql .= "o.storeid = ? ORDER BY o.id DESC LIMIT ? OFFSET ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iii", $current_store_id, $limit, $offset);
+        }
+
         if (!$stmt) {
             echo json_encode(["error" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        $stmt->bind_param("iii", $current_store_id, $limit, $offset);
     }
     
     $stmt->execute();
