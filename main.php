@@ -175,6 +175,55 @@ function sendFast2SMS($mobile, $message) {
     return $response;
 }
 
+// ✅ NEW: WhatsApp Message Function for Meta API
+function sendWhatsAppMessage($mobile, $template_name, $parameters = [], $language_code = 'en_US') {
+    $access_token = 'EAARgdFUDLZC8BRjZCSOYnZB0s01obDr7I1nlfUP1sjH97XkgT4TsQLM4pPFrspRAqh9ECFWUNiBZCP9x3Udxs0zKNbjOIdkTOZCjZBWVPhXj1ZC7dHKBST7acAvwverucZCl86CHXZCcdi4SikN4uJX8bN1fopumMDi0KkueUZA0kxsDcgmFdqGCDmVTZBdwcUawaJQoJo0uj7FWu1gRUrKhrgZChp5R6mKmKd36zKVfcgS1'; // Yahan apna lamba wala Permanent Token paste karein
+    $phone_number_id = '1038350379362420';      // Yahan apna 15-digit ka Phone Number ID dalein
+    $url = "https://graph.facebook.com/v17.0/$phone_number_id/messages";
+
+    $components = [];
+    if (!empty($parameters)) {
+        $params = [];
+        foreach ($parameters as $val) {
+            $params[] = ["type" => "text", "text" => (string)$val];
+        }
+        $components[] = ["type" => "body", "parameters" => $params];
+    }
+
+    $data = [
+        "messaging_product" => "whatsapp",
+        "to" => "91" . preg_replace('/\D/', '', $mobile),
+        "type" => "template",
+        "template" => [
+            "name" => $template_name,
+            "language" => ["code" => $language_code], 
+            "components" => $components
+        ]
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $access_token", "Content-Type: application/json"]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ✅ SSL verification skip (Localhost ke liye)
+
+    $result = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($result === false) {
+        return ["status" => "error", "curl_error" => $error];
+    }
+
+    $decoded = json_decode($result, true);
+    if ($decoded === null) {
+        return ["status" => "error", "message" => "Invalid JSON from Meta", "raw" => $result];
+    }
+
+    return $decoded;
+}
+
 // Function to escape JSON for MySQL
 function escapeJsonForMySQL($conn, $json) {
     // If already empty or invalid, return empty JSON array
@@ -828,6 +877,14 @@ $payment_update->close();
                 $log_entry .= "API Response: " . json_encode($sms_result) . "\n";
                 $log_entry .= "========================================\n\n";
                 file_put_contents('sms_delivery_log.txt', $log_entry, FILE_APPEND);
+
+                // ✅ Trigger WhatsApp: Order Created
+                  $wa_template = 'jaspers_market_order_confirmation_v1';
+                $wa_result = sendWhatsAppMessage($clean_mobile, $wa_template, [$name, $order_id, $payableAmount], 'en_US');
+                
+                // ✅ Log WhatsApp Response for Debugging
+                $wa_log = "[" . date('Y-m-d H:i:s') . "] Order #$order_id | Mobile: $clean_mobile | Response: " . json_encode($wa_result) . "\n";
+                file_put_contents('whatsapp_delivery_log.txt', $wa_log, FILE_APPEND);
             }
             
         } catch (Exception $e) {

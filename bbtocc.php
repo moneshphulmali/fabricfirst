@@ -411,6 +411,49 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
     exit;
 }
 
+// ✅ Add WhatsApp Function here too (or include from shared file)
+function sendWhatsAppMessage($mobile, $template_name, $parameters = [], $language_code = 'en_US') {
+    $access_token = 'EAARgdFUDLZC8BRjZCSOYnZB0s01obDr7I1nlfUP1sjH97XkgT4TsQLM4pPFrspRAqh9ECFWUNiBZCP9x3Udxs0zKNbjOIdkTOZCjZBWVPhXj1ZC7dHKBST7acAvwverucZCl86CHXZCcdi4SikN4uJX8bN1fopumMDi0KkueUZA0kxsDcgmFdqGCDmVTZBdwcUawaJQoJo0uj7FWu1gRUrKhrgZChp5R6mKmKd36zKVfcgS1'; // Yahan wahi token dalein jo main.php mein dala hai
+    $phone_number_id = '1038350379362420';      // Yahan wahi Phone Number ID dalein
+    $url = "https://graph.facebook.com/v17.0/$phone_number_id/messages";
+    $components = [];
+    if (!empty($parameters)) {
+        $params = [];
+        foreach ($parameters as $val) { $params[] = ["type" => "text", "text" => (string)$val]; }
+        $components[] = ["type" => "body", "parameters" => $params];
+    }
+    $data = [
+        "messaging_product" => "whatsapp",
+        "to" => "91" . preg_replace('/\D/', '', $mobile),
+        "type" => "template",
+        "template" => [
+            "name" => $template_name,
+            "language" => ["code" => $language_code], 
+            "components" => $components
+        ]
+    ];
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $access_token", "Content-Type: application/json"]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ✅ SSL verification skip
+
+    $result = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($result === false) {
+        return ["status" => "error", "curl_error" => $error];
+    }
+
+    $decoded = json_decode($result, true);
+    if ($decoded === null) {
+        return ["status" => "error", "message" => "Invalid JSON from Meta", "raw" => $result];
+    }
+
+    return $decoded;
+}
 // ---------------------------
 // API: update order status
 // ---------------------------
@@ -429,11 +472,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
     
     try {
         // ✅ FIXED: Check permission based on role
+        // Fetch customer mobile and name for notification
         if ($is_admin) {
             $check_sql = "
-                SELECT 1 FROM orders 
-                WHERE id = ? 
-                AND storeid IN ( 
+                SELECT o.id, c.mobile, c.name FROM orders o
+                JOIN customers c ON o.customer_id = c.id
+                WHERE o.id = ? 
+                AND o.storeid IN ( 
                     SELECT storeid 
                     FROM store_user_roles
                     WHERE user_id = ? 
@@ -445,9 +490,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
             $check_stmt->bind_param("ii", $order_id, $user_id);
         } else {
             $check_sql = "
-                SELECT 1 FROM orders 
-                WHERE id = ? 
-                AND storeid = ?
+                SELECT o.id, c.mobile, c.name FROM orders o
+                JOIN customers c ON o.customer_id = c.id
+                WHERE o.id = ? 
+                AND o.storeid = ?
                 LIMIT 1
             ";
             $check_stmt = $conn->prepare($check_sql);
@@ -455,10 +501,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         }
         
         $check_stmt->execute();
-        
-        if ($check_stmt->get_result()->num_rows === 0) {
+        $res_order_info = $check_stmt->get_result();
+        if ($res_order_info->num_rows === 0) {
             throw new Exception("Error: Order not found or access denied");
         }
+        $customer_info = $res_order_info->fetch_assoc();
         $check_stmt->close();
         
         if ($status === 'Delivered') {
@@ -503,6 +550,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         
         // Commit transaction
         $conn->commit();
+
+        // ✅ WhatsApp Notifications based on status
+        if ($status === 'Ready') {
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id]);
+            file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Ready #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
+        } elseif ($status === 'Delivered') {
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_update', [$customer_info['name'], $order_id]);
+            file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Delivered #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
+        }
+
         echo "Success: status updated in both tables";
         
     } catch (Exception $e) {
