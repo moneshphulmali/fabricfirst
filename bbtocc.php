@@ -476,6 +476,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         if ($is_admin) {
             $check_sql = "
                 SELECT o.id, c.mobile, c.name FROM orders o
+                SELECT o.id, c.mobile, c.name, o.payable_amount FROM orders o
                 JOIN customers c ON o.customer_id = c.id
                 WHERE o.id = ? 
                 AND o.storeid IN ( 
@@ -491,6 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         } else {
             $check_sql = "
                 SELECT o.id, c.mobile, c.name FROM orders o
+                SELECT o.id, c.mobile, c.name, o.payable_amount FROM orders o
                 JOIN customers c ON o.customer_id = c.id
                 WHERE o.id = ? 
                 AND o.storeid = ?
@@ -551,12 +553,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         // Commit transaction
         $conn->commit();
 
-        // ✅ WhatsApp Notifications based on status
+        // ✅ WhatsApp Notification for "Ready" status
         if ($status === 'Ready') {
             $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id]);
             file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Ready #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
+        }
+
+        // ✅ WhatsApp Notifications based on status
+        if ($status === 'Ready') {
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id]);
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id, number_format($customer_info['payable_amount'], 2)]);
+            file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Ready #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
         } elseif ($status === 'Delivered') {
             $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_update', [$customer_info['name'], $order_id]);
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_update', [$customer_info['name'], $order_id, number_format($customer_info['payable_amount'], 2)]);
             file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Delivered #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
         }
 
