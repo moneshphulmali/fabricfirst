@@ -475,7 +475,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         // Fetch customer mobile and name for notification
         if ($is_admin) {
             $check_sql = "
-                SELECT o.id, c.mobile, c.name FROM orders o
                 SELECT o.id, c.mobile, c.name, o.payable_amount FROM orders o
                 JOIN customers c ON o.customer_id = c.id
                 WHERE o.id = ? 
@@ -491,7 +490,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
             $check_stmt->bind_param("ii", $order_id, $user_id);
         } else {
             $check_sql = "
-                SELECT o.id, c.mobile, c.name FROM orders o
                 SELECT o.id, c.mobile, c.name, o.payable_amount FROM orders o
                 JOIN customers c ON o.customer_id = c.id
                 WHERE o.id = ? 
@@ -553,20 +551,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset(
         // Commit transaction
         $conn->commit();
 
-        // ✅ WhatsApp Notification for "Ready" status
-        if ($status === 'Ready') {
-            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id]);
-            file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Ready #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
-        }
-
         // ✅ WhatsApp Notifications based on status
         if ($status === 'Ready') {
-            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id]);
-            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_update', [$customer_info['name'], $order_id, number_format($customer_info['payable_amount'], 2)]);
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_ready_updates', [$customer_info['name'], $order_id]);
             file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Ready #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
-        } elseif ($status === 'Delivered') {
-            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_update', [$customer_info['name'], $order_id]);
-            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_update', [$customer_info['name'], $order_id, number_format($customer_info['payable_amount'], 2)]);
+        } elseif ($status === 'Delivered') { // ✅ Delivered status ke liye naya template aur parameters
+            $store_name = $_SESSION['user']['current_store']['store_name'] ?? 'Fabrico Laundry';
+            $store_contact = $_SESSION['user']['phone'] ?? '';
+            $wa_params = [
+                $customer_info['name'],             // {{1}}
+                $store_name,                        // {{2}}
+                $order_id,                          // {{3}}
+                number_format($customer_info['payable_amount'], 2), // {{4}}
+                $store_contact                      // {{5}}
+            ];
+            $wa_res = sendWhatsAppMessage($customer_info['mobile'], 'order_delivered_updates', $wa_params);
             file_put_contents('whatsapp_delivery_log.txt', "[".date('Y-m-d H:i:s')."] Delivered #$order_id | Res: ".json_encode($wa_res)."\n", FILE_APPEND);
         }
 

@@ -879,8 +879,22 @@ $payment_update->close();
                 file_put_contents('sms_delivery_log.txt', $log_entry, FILE_APPEND);
 
                 // ✅ Trigger WhatsApp: Order Created
-                  $wa_template = 'jaspers_market_order_confirmation_v1';
-                $wa_result = sendWhatsAppMessage($clean_mobile, $wa_template, [$name, $order_id, $payableAmount], 'en_US');
+                $wa_template = 'order_created_update';
+                $store_name = $_SESSION['user']['current_store']['store_name'] ?? 'Fabrico Laundry';
+                $store_contact = $_SESSION['user']['phone'] ?? '';
+                $amount_paid = "0.00"; // Naye order par default payment 0 hoti hai
+
+                $wa_params = [
+                    $name,             // {{1}}
+                    $store_name,       // {{2}}
+                    $order_id,         // {{3}}
+                    $total_quantity,   // {{4}}
+                    number_format($payableAmount, 2), // {{5}}
+                    $amount_paid,      // {{6}}
+                    $store_contact     // {{7}}
+                ];
+
+                $wa_result = sendWhatsAppMessage($clean_mobile, $wa_template, $wa_params, 'en_US');
                 
                 // ✅ Log WhatsApp Response for Debugging
                 $wa_log = "[" . date('Y-m-d H:i:s') . "] Order #$order_id | Mobile: $clean_mobile | Response: " . json_encode($wa_result) . "\n";

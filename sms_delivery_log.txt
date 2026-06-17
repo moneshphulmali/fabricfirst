@@ -2664,3 +2664,57 @@ Message: Hello Monesh Phulmali, Your order #95 has been created. Amount: Rs.300.
 API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
 ========================================
 
+========================================
+Time: 2026-06-13 14:15:25
+Order ID: 96
+Customer: Monesh Phulmali
+Mobile: 9575256156
+Message: Hello Monesh Phulmali, Your order #96 has been created. Amount: Rs.100. Delivery: 15/06/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-06-13 14:27:00
+Order ID: 97
+Customer: Sachin Sir Sanodiya
+Mobile: 9444187193
+Message: Hello Sachin Sir Sanodiya, Your order #97 has been created. Amount: Rs.239. Delivery: 16/06/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-06-17 11:53:04
+Order ID: 98
+Customer: Monesh Phulmali
+Mobile: 9575256156
+Message: Hello Monesh Phulmali, Your order #98 has been created. Amount: Rs.20. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-06-17 12:09:27
+Order ID: 99
+Customer: Monesh Phulmali
+Mobile: 9575256156
+Message: Hello Monesh Phulmali, Your order #99 has been created. Amount: Rs.879. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-06-17 12:12:47
+Order ID: 100
+Customer: Sachin Sir Sanodiya
+Mobile: 9444187193
+Message: Hello Sachin Sir Sanodiya, Your order #100 has been created. Amount: Rs.799. Delivery: 18/06/2026 (Afternoon (12-4)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+
+========================================
+Time: 2026-06-17 12:16:41
+Order ID: 101
+Customer: Monesh Phulmali Knw
+Mobile: 9575256156
+Message: Hello Monesh Phulmali Knw, Your order #101 has been created. Amount: Rs.70. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+API Response: {"status":"error","message":"cURL Error: URL rejected: Malformed input to a URL function"}
+========================================
+

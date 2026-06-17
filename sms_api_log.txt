@@ -3138,3 +3138,69 @@ Array
 )
 
 ---
+Array
+(
+    [time] => 2026-06-13 14:15:25
+    [mobile] => 9575256156
+    [message] => Hello Monesh Phulmali, Your order #96 has been created. Amount: Rs.100. Delivery: 15/06/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-06-13 14:27:00
+    [mobile] => 9444187193
+    [message] => Hello Sachin Sir Sanodiya, Your order #97 has been created. Amount: Rs.239. Delivery: 16/06/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-06-17 11:53:04
+    [mobile] => 9575256156
+    [message] => Hello Monesh Phulmali, Your order #98 has been created. Amount: Rs.20. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-06-17 12:09:27
+    [mobile] => 9575256156
+    [message] => Hello Monesh Phulmali, Your order #99 has been created. Amount: Rs.879. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-06-17 12:12:47
+    [mobile] => 9444187193
+    [message] => Hello Sachin Sir Sanodiya, Your order #100 has been created. Amount: Rs.799. Delivery: 18/06/2026 (Afternoon (12-4)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
+Array
+(
+    [time] => 2026-06-17 12:16:41
+    [mobile] => 9575256156
+    [message] => Hello Monesh Phulmali Knw, Your order #101 has been created. Amount: Rs.70. Delivery: 19/06/2026 (Evening (4-8)). Thank you!
+    [http_code] => 0
+    [curl_error] => URL rejected: Malformed input to a URL function
+    [response] => 
+)
+
+---
