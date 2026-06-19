@@ -284,7 +284,7 @@ function renderTable(orders) {
 
         // ✅ अब customer info एक ही लाइन में
         td.innerHTML = `
-          ${i + 1}. ${item.id} [${item.quantity || 0} Pcs] - ₹${item.total_amount} - ${item.delivery_slot || ''} | 
+          ${i + 1}. ${item.id} [${item.quantity || 0} Pcs] - ₹${item.payable_amount} - ${item.delivery_slot || ''} | 
           ${item.customer_name} 📞 <span style="color:#555;">${item.customer_phone || ""}</span>
           ${changeButton} ${invoiceButton}
         `;

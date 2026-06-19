@@ -939,6 +939,7 @@ th { background: #00aaff; color: white; }
 .pagination button { background: #00aaff; color: white; padding: 8px 14px; margin: 0 4px; border-radius: 5px; border: none; cursor: pointer; }
 .pagination button.active { background: #006699; }
 .pagination button:hover { background: #0088cc; }
+.pagination span { color: black; cursor: pointer; margin: 0 10px; font-weight: bold; font-size: 18px; user-select: none; vertical-align: middle; }
 #searchBox { width: 300px; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
 #searchBtn { background: #00aaff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
 #searchBtn:hover { background: #0088cc; }
@@ -1172,28 +1173,79 @@ function showPage(page) {
         </tr>`;
     });
 
-    updatePaginationActive();
+    createPagination();
 }
 
 function createPagination() {
     const paginationDiv = document.getElementById("pagination");
     paginationDiv.innerHTML = "";
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-    for (let i = 1; i <= totalPages; i++) {
+    if (totalPages <= 1) return;
+
+    // Sliding window logic: Max 10 buttons show karne ke liye
+    let startPage, endPage;
+    const maxVisibleButtons = 10;
+
+    if (totalPages <= maxVisibleButtons) {
+        startPage = 1;
+        endPage = totalPages;
+    } else {
+        if (currentPage <= 5) {
+            startPage = 1;
+            endPage = 10;
+        } else if (currentPage + 5 >= totalPages) {
+            startPage = totalPages - 9;
+            endPage = totalPages;
+        } else {
+            startPage = currentPage - 5;
+            endPage = currentPage + 4;
+        }
+    }
+
+    // Left Arrow (Pahle button ke left side mein)
+    const leftArrow = document.createElement("span");
+    leftArrow.innerHTML = "&#10094;&nbsp;"; 
+    leftArrow.style.color = "black";
+    leftArrow.style.cursor = "pointer";
+    leftArrow.style.fontSize = "20px";
+    leftArrow.style.fontWeight = "bold";
+    leftArrow.style.verticalAlign = "middle";
+    leftArrow.onclick = () => { if (currentPage > 1) showPage(currentPage - 1); };
+    paginationDiv.appendChild(leftArrow);
+
+    // Page number buttons
+    for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement("button");
         btn.innerText = i;
         btn.onclick = () => showPage(i);
-        btn.id = "pageBtn" + i;
+        if (i === currentPage) btn.classList.add("active");
         paginationDiv.appendChild(btn);
     }
-}
+    
+    // Right Arrow (Aakhiri button ke right side mein)
+    const rightArrow = document.createElement("span");
+    rightArrow.innerHTML = "&nbsp;&#10095;"; 
+    rightArrow.style.color = "black";
+    rightArrow.style.cursor = "pointer";
+    rightArrow.style.fontSize = "20px";
+    rightArrow.style.fontWeight = "bold";
+    rightArrow.style.verticalAlign = "middle";
+    rightArrow.onclick = () => { if (currentPage < totalPages) showPage(currentPage + 1); };
+    paginationDiv.appendChild(rightArrow);
 
-function updatePaginationActive() {
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.getElementById("pageBtn" + i);
-        if (btn) btn.classList.toggle("active", i === currentPage);
-    }
+    // ✅ Showing X to Y of Z orders message
+    const totalOrders = filteredData.length;
+    const startOrder = (currentPage - 1) * rowsPerPage + 1;
+    const endOrder = Math.min(currentPage * rowsPerPage, totalOrders);
+
+    const messageDiv = document.createElement("div");
+    messageDiv.style.marginTop = "10px";
+    messageDiv.style.fontSize = "14px";
+    messageDiv.style.color = "#555";
+    messageDiv.style.fontWeight = "bold";
+    messageDiv.textContent = `Showing ${startOrder} to ${endOrder} of ${totalOrders} orders`;
+    paginationDiv.appendChild(messageDiv);
+
 }
 
 function updateStatus(order_id, newStatus) {
