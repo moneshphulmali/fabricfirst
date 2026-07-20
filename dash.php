@@ -180,14 +180,14 @@ async function loadOrders(append = false) {
   
   const data = await res.json();
 
-  if (data.length === 0) {
+  if (!data || !data.orders || data.orders.length === 0) {
     if(loadBtn) loadBtn.style.display = 'none';
     if(!append) renderTable([]);
     return;
   }
-
+  
   // Filter out delivered orders so they don't show on the dashboard
-  const filtered = data.filter(order => (order.status || "").toLowerCase() !== 'delivered');
+  const filtered = data.orders.filter(order => (order.status || "").toLowerCase() !== 'delivered');
   
   if (append) {
     allOrders = [...allOrders, ...filtered];
@@ -199,7 +199,7 @@ async function loadOrders(append = false) {
   
   // ✅ Check logic: Agar unique dates ki ginti limit (10) ke barabar hai, 
   // matlab piche aur bhi purana data ho sakta hai.
-  const uniqueDatesInResponse = [...new Set(data.map(o => o.delivery_date))].length;
+  const uniqueDatesInResponse = [...new Set(data.orders.map(o => o.delivery_date))].length;
   hasMoreData = (uniqueDatesInResponse >= limit);
 }
 

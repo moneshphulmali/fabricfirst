@@ -225,11 +225,28 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_label_data') {
 if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
     header("Content-Type: application/json; charset=utf-8");
 
-    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100; // Default limit for performance
+    // ✅ Server-side pagination parameters
+    $rowsPerPage = isset($_GET['limit']) ? intval($_GET['limit']) : 10; // Default 10 per page
     $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0; // Default offset
     $mode = $_GET['mode'] ?? '';
 
-    // 
+    // ✅ Get total count for pagination
+    $count_sql = "SELECT COUNT(o.id) as total FROM orders o WHERE ";
+    if ($is_admin) {
+        $count_sql .= "o.storeid IN (SELECT storeid FROM store_user_roles WHERE user_id = ? AND role_id IN (1, 2))";
+        $count_stmt = $conn->prepare($count_sql);
+        $count_stmt->bind_param("i", $user_id);
+    } else {
+        $count_sql .= "o.storeid = ?";
+        $count_stmt = $conn->prepare($count_sql);
+        $count_stmt->bind_param("i", $current_store_id);
+    }
+    $count_stmt->execute();
+    $count_result = $count_stmt->get_result()->fetch_assoc();
+    $total_records = $count_result['total'] ?? 0;
+    $count_stmt->close();
+
+    // ✅ Main query for fetching paginated data
     if ($is_admin) {
        
         $sql = "
@@ -271,9 +288,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                     ORDER BY delivery_date DESC 
                     LIMIT ? OFFSET ?
                 ) AS tmp
-            ) AND o.storeid IN (SELECT storeid FROM store_user_roles WHERE user_id = ? AND role_id IN (1, 2))";
-            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC");
-            $stmt->bind_param("iiii", $user_id, $limit, $offset, $user_id);
+            ) AND o.storeid IN (SELECT storeid FROM store_user_roles WHERE user_id = ? AND role_id IN (1, 2)) AND (o.status != 'Delivered' OR o.status IS NULL)";
+            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC"); // No limit/offset here, it's for date selection
+            $stmt->bind_param("iiii", $user_id, $rowsPerPage, $offset, $user_id);
         } else {
             $sql .= "o.storeid IN ( 
                 SELECT storeid 
@@ -282,7 +299,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                 AND role_id IN (1, 2)  
             ) ORDER BY o.id DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iii", $user_id, $limit, $offset);
+            $stmt->bind_param("iii", $user_id, $rowsPerPage, $offset);
         }
 
         if (!$stmt) {
@@ -330,13 +347,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
                     ORDER BY delivery_date DESC 
                     LIMIT ? OFFSET ?
                 ) AS tmp
-            ) AND o.storeid = ?";
-            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC");
-            $stmt->bind_param("iiii", $current_store_id, $limit, $offset, $current_store_id);
+            ) AND o.storeid = ? AND (o.status != 'Delivered' OR o.status IS NULL)";
+            $stmt = $conn->prepare($sql . " ORDER BY o.delivery_date DESC, o.id DESC"); // No limit/offset here
+            $stmt->bind_param("iiii", $current_store_id, $rowsPerPage, $offset, $current_store_id);
         } else {
             $sql .= "o.storeid = ? ORDER BY o.id DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iii", $current_store_id, $limit, $offset);
+            $stmt->bind_param("iii", $current_store_id, $rowsPerPage, $offset);
         }
 
         if (!$stmt) {
@@ -405,7 +422,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_orders') {
         $orders[] = $row;
     }
 
-    echo json_encode($orders, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+    // ✅ Return data with total count
+    echo json_encode([
+        'orders' => $orders,
+        'total_records' => $total_records
+    ], JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
     $stmt->close();
     $conn->close();
     exit;
@@ -1031,23 +1052,40 @@ let ordersData = [];
 let filteredData = [];
 const rowsPerPage = 10;
 let currentPage = 1;
+let totalRecords = 0;
 
-fetch("bbtocc.php?action=get_orders")
-.then(res => res.json())
-.then(data => {
-    if (data && data.error) {
-        document.getElementById("error").innerText = "❌ " + data.error;
-        return;
-    }
-    ordersData = data;
-    filteredData = data;
-    createPagination();
-    showPage(1);
-})
-.catch(err => {
-    document.getElementById("error").innerText = "❌ Error fetching orders!";
-    console.error(err);
-});
+// ✅ NEW: Server-side fetch function
+function fetchAndRenderOrders(page = 1) {
+    currentPage = page;
+    const offset = (page - 1) * rowsPerPage;
+    const table = document.getElementById("ordersTable");
+    table.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Loading...</td></tr>`;
+
+    // Fetch data for the specific page
+    fetch(`bbtocc.php?action=get_orders&limit=${rowsPerPage}&offset=${offset}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.error) {
+                document.getElementById("error").innerText = "❌ " + data.error;
+                table.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">${data.error}</td></tr>`;
+                return;
+            }
+            
+            // Store data
+            ordersData = data.orders || [];
+            filteredData = ordersData; // Filters will now be client-side on the current page's data
+            totalRecords = data.total_records || 0;
+
+            // Render the page
+            renderPage(filteredData); // New render function
+            createPagination(); // Re-create pagination based on new total
+        })
+        .catch(err => {
+            document.getElementById("error").innerText = "❌ Error fetching orders!";
+            table.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Error fetching orders!</td></tr>`;
+            console.error(err);
+        });
+}
 
 function applyFilters() {
   const q = document.getElementById("searchBox").value.trim().toLowerCase();
@@ -1055,7 +1093,7 @@ function applyFilters() {
   const payment = document.getElementById("paymentFilter").value.toLowerCase();
   
   filteredData = ordersData.filter(o => {
-    const matchesSearch = q === "" || 
+    const matchesSearch = q === "" || // Note: This search is now only on the current page's data
       o.id.toString().includes(q) ||
       (o.customer_name && o.customer_name.toLowerCase().includes(q)) ||
       (o.customer_phone && o.customer_phone.includes(q));
@@ -1066,22 +1104,17 @@ function applyFilters() {
     return matchesSearch && matchesStatus && matchesPayment;
   });
   
-  createPagination();
-  showPage(1);
+  renderPage(filteredData); // Re-render the table with filtered data for the current page
+  // Pagination doesn't need to be recreated as total records haven't changed
 }
 
 document.getElementById("searchBtn").addEventListener("click", applyFilters);
 document.getElementById("statusFilter").addEventListener("change", applyFilters);
 document.getElementById("paymentFilter").addEventListener("change", applyFilters);
 
-function showPage(page) {
-    currentPage = page;
+function renderPage(pageData) {
     const table = document.getElementById("ordersTable");
     table.innerHTML = "";
-
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const pageData = filteredData.slice(start, end);
 
     pageData.forEach(order => {
         const oid = order.id;
@@ -1172,14 +1205,12 @@ function showPage(page) {
             <td id="orderStatus-${oid}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
         </tr>`;
     });
-
-    createPagination();
 }
 
 function createPagination() {
     const paginationDiv = document.getElementById("pagination");
     paginationDiv.innerHTML = "";
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    const totalPages = Math.ceil(totalRecords / rowsPerPage);
     if (totalPages <= 1) return;
 
     // Sliding window logic: Max 10 buttons show karne ke liye
@@ -1210,14 +1241,14 @@ function createPagination() {
     leftArrow.style.fontSize = "20px";
     leftArrow.style.fontWeight = "bold";
     leftArrow.style.verticalAlign = "middle";
-    leftArrow.onclick = () => { if (currentPage > 1) showPage(currentPage - 1); };
+    leftArrow.onclick = () => { if (currentPage > 1) fetchAndRenderOrders(currentPage - 1); };
     paginationDiv.appendChild(leftArrow);
 
     // Page number buttons
     for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement("button");
         btn.innerText = i;
-        btn.onclick = () => showPage(i);
+        btn.onclick = () => fetchAndRenderOrders(i);
         if (i === currentPage) btn.classList.add("active");
         paginationDiv.appendChild(btn);
     }
@@ -1230,11 +1261,11 @@ function createPagination() {
     rightArrow.style.fontSize = "20px";
     rightArrow.style.fontWeight = "bold";
     rightArrow.style.verticalAlign = "middle";
-    rightArrow.onclick = () => { if (currentPage < totalPages) showPage(currentPage + 1); };
+    rightArrow.onclick = () => { if (currentPage < totalPages) fetchAndRenderOrders(currentPage + 1); };
     paginationDiv.appendChild(rightArrow);
 
     // ✅ Showing X to Y of Z orders message
-    const totalOrders = filteredData.length;
+    const totalOrders = totalRecords;
     const startOrder = (currentPage - 1) * rowsPerPage + 1;
     const endOrder = Math.min(currentPage * rowsPerPage, totalOrders);
 
@@ -1247,6 +1278,9 @@ function createPagination() {
     paginationDiv.appendChild(messageDiv);
 
 }
+
+// ✅ Initial load
+fetchAndRenderOrders(1);
 
 function updateStatus(order_id, newStatus) {
     if (!order_id) return;
